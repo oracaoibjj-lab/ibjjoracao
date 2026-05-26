@@ -67,10 +67,10 @@ function Home() {
             <p className="inline-flex items-center gap-2 rounded-full bg-gold/15 px-4 py-1.5 text-sm font-medium text-gold-foreground">
               <Sparkles className="h-4 w-4" /> Bem-vindo à IBJJ
             </p>
-            <h1 className="mt-6 font-display text-5xl sm:text-6xl text-primary-dark">
-              Um lugar para orar <br /> e cuidar uns dos outros.
+            <h1 className="mt-6 font-display text-4xl sm:text-5xl text-primary-dark">
+              Bem-vindo
             </h1>
-            <p className="mt-5 text-lg text-muted-foreground max-w-xl mx-auto lg:mx-0">
+            <p className="mt-6 font-display text-3xl sm:text-4xl text-primary-dark leading-tight max-w-2xl mx-auto lg:mx-0">
               Compartilhe pedidos de oração, agradecimentos e acompanhe a vida da nossa igreja.
             </p>
             <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center lg:justify-start">
