@@ -82,7 +82,7 @@ function Home() {
               </Link>
             </div>
           </div>
-          <img src={logo} alt="IBJJ" width={280} height={280} className="mx-auto h-56 w-56 lg:h-72 lg:w-72 drop-shadow-xl" />
+          <img src={logo} alt="IBJJ" className="mx-auto h-56 lg:h-72 w-auto object-contain drop-shadow-xl" />
         </div>
       </section>
 
@@ -97,12 +97,19 @@ function Home() {
         </section>
       )}
 
-      {/* STATS */}
-      <section className="mx-auto max-w-6xl px-6 py-12 grid sm:grid-cols-3 gap-4">
-        <StatCard icon={Heart} label="Pedidos no mural" value={stats?.totalPrayers ?? 0} />
-        <StatCard icon={Users} label="Membros cadastrados" value={stats?.totalMembers ?? 0} />
-        <StatCard icon={Calendar} label="Programações" value={schedule?.length ?? 0} />
+      {/* MEMBERS COUNT */}
+      <section className="mx-auto max-w-4xl px-6 py-12">
+        <div className="rounded-3xl border border-border bg-card p-8 flex items-center justify-center gap-5 text-center">
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+            <Users className="h-8 w-8" />
+          </div>
+          <div className="text-left">
+            <p className="font-display text-4xl text-primary-dark leading-none">{stats?.totalMembers ?? 0}</p>
+            <p className="mt-1 text-sm text-muted-foreground">membros na nossa família IBJJ</p>
+          </div>
+        </div>
       </section>
+
 
       {/* RECENT PRAYERS */}
       <section className="mx-auto max-w-6xl px-6 py-8">
