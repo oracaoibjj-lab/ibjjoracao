@@ -40,7 +40,11 @@ function MuralPage() {
   const { data: prayers, isLoading } = useQuery({
     queryKey: ["prayers", filterCat, filterType],
     queryFn: async () => {
-      let q = supabase.from("prayer_requests").select("*").eq("status", "aprovado").order("created_at", { ascending: false });
+      let q = supabase
+        .from("prayer_requests")
+        .select("*, members(id, full_name, photo_url)")
+        .eq("status", "aprovado")
+        .order("created_at", { ascending: false });
       if (filterCat !== "all") q = q.eq("category", filterCat as never);
       if (filterType !== "all") q = q.eq("type", filterType as never);
       const { data, error } = await q;
@@ -125,11 +129,28 @@ function MuralPage() {
                 </span>
                 <span className="text-muted-foreground">{CATEGORIES.find((c) => c.v === p.category)?.l}</span>
               </div>
-              <h3 className="mt-3 font-display text-2xl text-primary-dark">{p.title}</h3>
+
+              {(p as any).members && (
+                <div className="mt-4 flex items-center gap-3 rounded-2xl bg-background/60 border border-border/60 p-3">
+                  {(p as any).members.photo_url ? (
+                    <img src={(p as any).members.photo_url} alt="" className="h-10 w-10 rounded-full object-cover" />
+                  ) : (
+                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-semibold">
+                      {((p as any).members.full_name as string).slice(0, 1)}
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <p className="text-[10px] uppercase tracking-widest text-muted-foreground">{isThanks ? "Por" : "Para"}</p>
+                    <p className="text-sm font-medium text-primary-dark truncate">{(p as any).members.full_name}</p>
+                  </div>
+                </div>
+              )}
+
+              <h3 className="mt-4 font-display text-2xl text-primary-dark">{p.title}</h3>
               <p className="mt-2 text-foreground/80 whitespace-pre-wrap">{p.description}</p>
               <div className="mt-5 flex items-center justify-between">
                 <p className="text-sm text-muted-foreground">
-                  {p.is_anonymous ? "Anônimo" : (p.display_name ?? "Membro")} • {format(new Date(p.created_at), "dd 'de' MMMM", { locale: ptBR })}
+                  {p.is_anonymous ? "Enviado anonimamente" : `Por ${p.display_name ?? "Membro"}`} • {format(new Date(p.created_at), "dd 'de' MMMM", { locale: ptBR })}
                 </p>
                 <button
                   onClick={() => toggleReact(p.id)}
@@ -162,9 +183,16 @@ function NewPrayerDialog() {
   const [desc, setDesc] = useState("");
   const [cat, setCat] = useState("outros");
   const [type, setType] = useState<"pedido" | "agradecimento">("pedido");
+  const [memberId, setMemberId] = useState<string>("");
   const [anon, setAnon] = useState(false);
   const [whole, setWhole] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const { data: members } = useQuery({
+    queryKey: ["members-options"],
+    enabled: open,
+    queryFn: async () => (await supabase.from("members").select("id, full_name").order("full_name")).data ?? [],
+  });
 
   const open_ = () => {
     if (!user) { navigate({ to: "/login" }); return; }
@@ -174,10 +202,12 @@ function NewPrayerDialog() {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
+    if (!memberId) { toast.error("Selecione o membro a quem este pedido se refere"); return; }
     setLoading(true);
     const { data: prof } = await supabase.from("profiles").select("full_name").eq("id", user.id).maybeSingle();
     const { error } = await supabase.from("prayer_requests").insert({
       author_id: user.id,
+      member_id: memberId,
       title, description: desc,
       category: cat as never, type,
       is_anonymous: anon, is_whole_family: whole,
@@ -189,7 +219,7 @@ function NewPrayerDialog() {
     else {
       toast.success("Pedido enviado! Aguardando aprovação.");
       setOpen(false);
-      setTitle(""); setDesc(""); setCat("outros"); setAnon(false); setWhole(false); setType("pedido");
+      setTitle(""); setDesc(""); setCat("outros"); setAnon(false); setWhole(false); setType("pedido"); setMemberId("");
       qc.invalidateQueries({ queryKey: ["prayers"] });
     }
   };
@@ -201,7 +231,7 @@ function NewPrayerDialog() {
           <Plus className="h-5 w-5 mr-2" /> Novo pedido
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader><DialogTitle className="font-display text-2xl text-primary-dark">Enviar ao mural</DialogTitle></DialogHeader>
         <form onSubmit={submit} className="space-y-4">
           <div className="flex gap-2">
@@ -210,6 +240,15 @@ function NewPrayerDialog() {
                 {t === "pedido" ? "Pedido de oração" : "Agradecimento"}
               </button>
             ))}
+          </div>
+          <div>
+            <Label>{type === "pedido" ? "Para qual membro?" : "Em nome de qual membro?"} *</Label>
+            <Select value={memberId} onValueChange={setMemberId}>
+              <SelectTrigger className="mt-1 h-12 rounded-xl"><SelectValue placeholder="Selecione um membro" /></SelectTrigger>
+              <SelectContent className="max-h-64">
+                {members?.map((m) => <SelectItem key={m.id} value={m.id}>{m.full_name}</SelectItem>)}
+              </SelectContent>
+            </Select>
           </div>
           <div>
             <Label htmlFor="t">Título</Label>
