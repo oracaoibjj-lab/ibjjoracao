@@ -11,6 +11,7 @@ import appCss from "../styles.css?url";
 import { AuthProvider } from "@/lib/auth";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Toaster } from "@/components/ui/sonner";
+import { SiteGate } from "@/components/SiteGate";
 
 function NotFoundComponent() {
   return (
@@ -87,9 +88,11 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <AppLayout>
-          <Outlet />
-        </AppLayout>
+        <SiteGate>
+          <AppLayout>
+            <Outlet />
+          </AppLayout>
+        </SiteGate>
         <Toaster richColors position="top-center" />
       </AuthProvider>
     </QueryClientProvider>
