@@ -210,6 +210,11 @@ function MemberForm({ member }: { member?: any }) {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<any>(member ?? { full_name: "", marital_status: "solteiro" });
   const { data: families } = useQuery({ queryKey: ["fams-opts"], queryFn: async () => (await supabase.from("families").select("id,name").order("name")).data ?? [] });
+  const { data: memberOptions } = useQuery({
+    queryKey: ["member-opts"],
+    enabled: open,
+    queryFn: async () => (await supabase.from("members").select("id, full_name").order("full_name")).data ?? [],
+  });
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -221,6 +226,8 @@ function MemberForm({ member }: { member?: any }) {
     if (error) toast.error(error.message);
     else { toast.success("Salvo"); setOpen(false); qc.invalidateQueries({ queryKey: ["admin-members"] }); qc.invalidateQueries({ queryKey: ["members"] }); qc.invalidateQueries({ queryKey: ["families-with-members"] }); }
   };
+
+  const options = (memberOptions ?? []).filter((m) => !member || m.id !== member.id);
 
   return (
     <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (o && member) setForm(member); else if (o) setForm({ full_name: "", marital_status: "solteiro" }); }}>
@@ -250,8 +257,26 @@ function MemberForm({ member }: { member?: any }) {
               </SelectContent>
             </Select>
           </div>
-          <div><Label>Cônjuge</Label><Input value={form.spouse ?? ""} onChange={(e) => setForm({ ...form, spouse: e.target.value })} /></div>
-          <div><Label>Filhos</Label><Input value={form.children ?? ""} onChange={(e) => setForm({ ...form, children: e.target.value })} /></div>
+          <div className="col-span-2">
+            <Label>Cônjuge</Label>
+            <MemberPicker
+              options={options}
+              value={form.spouse ?? ""}
+              multi={false}
+              placeholder="Selecione o cônjuge entre os membros"
+              onChange={(v) => setForm({ ...form, spouse: v })}
+            />
+          </div>
+          <div className="col-span-2">
+            <Label>Filhos</Label>
+            <MemberPicker
+              options={options}
+              value={form.children ?? ""}
+              multi={true}
+              placeholder="Selecione os filhos entre os membros"
+              onChange={(v) => setForm({ ...form, children: v })}
+            />
+          </div>
           <div><Label>Telefone (admin)</Label><Input value={form.phone ?? ""} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></div>
           <div><Label>E-mail (admin)</Label><Input value={form.email ?? ""} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
           <div><Label>Data de batismo</Label><Input type="date" value={form.baptism_date ?? ""} onChange={(e) => setForm({ ...form, baptism_date: e.target.value })} /></div>
@@ -260,6 +285,58 @@ function MemberForm({ member }: { member?: any }) {
         </form>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function MemberPicker({
+  options, value, multi, placeholder, onChange,
+}: {
+  options: { id: string; full_name: string }[];
+  value: string;
+  multi: boolean;
+  placeholder: string;
+  onChange: (v: string) => void;
+}) {
+  const selected = (value ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+  const toggle = (name: string) => {
+    if (multi) {
+      const next = selected.includes(name) ? selected.filter((n) => n !== name) : [...selected, name];
+      onChange(next.join(", "));
+    } else {
+      onChange(selected[0] === name ? "" : name);
+    }
+  };
+  return (
+    <div className="mt-1 rounded-md border border-input bg-card">
+      {selected.length > 0 && (
+        <div className="flex flex-wrap gap-1 p-2 border-b border-border">
+          {selected.map((s) => (
+            <span key={s} className="inline-flex items-center gap-1 rounded-full bg-primary/10 text-primary text-xs px-2 py-1">
+              {s}
+              <button type="button" onClick={() => toggle(s)} className="hover:text-destructive">×</button>
+            </span>
+          ))}
+        </div>
+      )}
+      <div className="max-h-40 overflow-y-auto p-1">
+        {options.length === 0 && <p className="px-2 py-2 text-sm text-muted-foreground">Nenhum membro disponível.</p>}
+        {options.map((m) => {
+          const isSel = selected.includes(m.full_name);
+          return (
+            <button
+              type="button"
+              key={m.id}
+              onClick={() => toggle(m.full_name)}
+              className={`w-full text-left px-3 py-2 text-sm rounded-md ${isSel ? "bg-primary text-primary-foreground" : "hover:bg-secondary"}`}
+            >
+              {multi && <span className="mr-2">{isSel ? "☑" : "☐"}</span>}
+              {m.full_name}
+            </button>
+          );
+        })}
+      </div>
+      {selected.length === 0 && <p className="px-3 pb-2 text-xs text-muted-foreground">{placeholder}</p>}
+    </div>
   );
 }
 
