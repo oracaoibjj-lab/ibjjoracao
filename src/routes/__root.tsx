@@ -11,7 +11,6 @@ import appCss from "../styles.css?url";
 import { AuthProvider } from "@/lib/auth";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Toaster } from "@/components/ui/sonner";
-import { SiteGate } from "@/components/SiteGate";
 
 function NotFoundComponent() {
   return (
@@ -54,6 +53,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { title: "Mural de Oração IBJJ" },
       { name: "description", content: "Mural de oração, agradecimentos e avisos da IBJJ." },
       { name: "theme-color", content: "#2D5D8C" },
+      { property: "og:title", content: "Mural de Oração IBJJ" },
+      { name: "twitter:title", content: "Mural de Oração IBJJ" },
+      { property: "og:description", content: "Mural de oração, agradecimentos e avisos da IBJJ." },
+      { name: "twitter:description", content: "Mural de oração, agradecimentos e avisos da IBJJ." },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/hFVBedpJYcfbVtlgTlQwzLb2oK62/social-images/social-1779807385828-IMG_7944.webp" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/hFVBedpJYcfbVtlgTlQwzLb2oK62/social-images/social-1779807385828-IMG_7944.webp" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { property: "og:type", content: "website" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
@@ -88,11 +95,9 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <SiteGate>
-          <AppLayout>
-            <Outlet />
-          </AppLayout>
-        </SiteGate>
+        <AppLayout>
+          <Outlet />
+        </AppLayout>
         <Toaster richColors position="top-center" />
       </AuthProvider>
     </QueryClientProvider>
