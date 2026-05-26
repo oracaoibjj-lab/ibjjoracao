@@ -215,7 +215,7 @@ function NewPrayerDialog() {
     if (!anon) {
       if (user) {
         const { data: prof } = await supabase.from("profiles").select("full_name").eq("id", user.id).maybeSingle();
-        displayName = prof?.full_name ?? authorName.trim() || null;
+        displayName = prof?.full_name ?? (authorName.trim() || null);
       } else {
         displayName = authorName.trim() || null;
       }
