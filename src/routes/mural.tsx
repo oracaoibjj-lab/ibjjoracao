@@ -129,11 +129,28 @@ function MuralPage() {
                 </span>
                 <span className="text-muted-foreground">{CATEGORIES.find((c) => c.v === p.category)?.l}</span>
               </div>
-              <h3 className="mt-3 font-display text-2xl text-primary-dark">{p.title}</h3>
+
+              {(p as any).members && (
+                <div className="mt-4 flex items-center gap-3 rounded-2xl bg-background/60 border border-border/60 p-3">
+                  {(p as any).members.photo_url ? (
+                    <img src={(p as any).members.photo_url} alt="" className="h-10 w-10 rounded-full object-cover" />
+                  ) : (
+                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-semibold">
+                      {((p as any).members.full_name as string).slice(0, 1)}
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <p className="text-[10px] uppercase tracking-widest text-muted-foreground">{isThanks ? "Por" : "Para"}</p>
+                    <p className="text-sm font-medium text-primary-dark truncate">{(p as any).members.full_name}</p>
+                  </div>
+                </div>
+              )}
+
+              <h3 className="mt-4 font-display text-2xl text-primary-dark">{p.title}</h3>
               <p className="mt-2 text-foreground/80 whitespace-pre-wrap">{p.description}</p>
               <div className="mt-5 flex items-center justify-between">
                 <p className="text-sm text-muted-foreground">
-                  {p.is_anonymous ? "Anônimo" : (p.display_name ?? "Membro")} • {format(new Date(p.created_at), "dd 'de' MMMM", { locale: ptBR })}
+                  {p.is_anonymous ? "Enviado anonimamente" : `Por ${p.display_name ?? "Membro"}`} • {format(new Date(p.created_at), "dd 'de' MMMM", { locale: ptBR })}
                 </p>
                 <button
                   onClick={() => toggleReact(p.id)}
