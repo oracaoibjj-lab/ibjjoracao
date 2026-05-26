@@ -20,13 +20,11 @@ function Home() {
   const { data: stats } = useQuery({
     queryKey: ["home-stats"],
     queryFn: async () => {
-      const [prayers, approved, members] = await Promise.all([
-        supabase.from("prayer_requests").select("id", { count: "exact", head: true }).eq("status", "aprovado"),
+      const [approved, members] = await Promise.all([
         supabase.from("prayer_requests").select("id,title,display_name,is_anonymous,type,category,created_at").eq("status", "aprovado").order("created_at", { ascending: false }).limit(4),
         supabase.from("members").select("id", { count: "exact", head: true }),
       ]);
       return {
-        totalPrayers: prayers.count ?? 0,
         recent: approved.data ?? [],
         totalMembers: members.count ?? 0,
       };
