@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Heart, Users, Megaphone, Calendar, BookOpen, Sparkles } from "lucide-react";
+import { Heart, Megaphone, Calendar, BookOpen, Sparkles, Users } from "lucide-react";
 import logo from "@/assets/logo-ibjj.png";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -20,13 +20,11 @@ function Home() {
   const { data: stats } = useQuery({
     queryKey: ["home-stats"],
     queryFn: async () => {
-      const [prayers, approved, members] = await Promise.all([
-        supabase.from("prayer_requests").select("id", { count: "exact", head: true }).eq("status", "aprovado"),
+      const [approved, members] = await Promise.all([
         supabase.from("prayer_requests").select("id,title,display_name,is_anonymous,type,category,created_at").eq("status", "aprovado").order("created_at", { ascending: false }).limit(4),
         supabase.from("members").select("id", { count: "exact", head: true }),
       ]);
       return {
-        totalPrayers: prayers.count ?? 0,
         recent: approved.data ?? [],
         totalMembers: members.count ?? 0,
       };
@@ -84,7 +82,7 @@ function Home() {
               </Link>
             </div>
           </div>
-          <img src={logo} alt="IBJJ" width={280} height={280} className="mx-auto h-56 w-56 lg:h-72 lg:w-72 drop-shadow-xl" />
+          <img src={logo} alt="IBJJ" className="mx-auto h-56 lg:h-72 w-auto object-contain drop-shadow-xl" />
         </div>
       </section>
 
@@ -99,12 +97,19 @@ function Home() {
         </section>
       )}
 
-      {/* STATS */}
-      <section className="mx-auto max-w-6xl px-6 py-12 grid sm:grid-cols-3 gap-4">
-        <StatCard icon={Heart} label="Pedidos no mural" value={stats?.totalPrayers ?? 0} />
-        <StatCard icon={Users} label="Membros cadastrados" value={stats?.totalMembers ?? 0} />
-        <StatCard icon={Calendar} label="Programações" value={schedule?.length ?? 0} />
+      {/* MEMBERS COUNT */}
+      <section className="mx-auto max-w-4xl px-6 py-12">
+        <div className="rounded-3xl border border-border bg-card p-8 flex items-center justify-center gap-5 text-center">
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+            <Users className="h-8 w-8" />
+          </div>
+          <div className="text-left">
+            <p className="font-display text-4xl text-primary-dark leading-none">{stats?.totalMembers ?? 0}</p>
+            <p className="mt-1 text-sm text-muted-foreground">membros na nossa família IBJJ</p>
+          </div>
+        </div>
       </section>
+
 
       {/* RECENT PRAYERS */}
       <section className="mx-auto max-w-6xl px-6 py-8">
@@ -169,19 +174,6 @@ function Home() {
   );
 }
 
-function StatCard({ icon: Icon, label, value }: { icon: typeof Heart; label: string; value: number }) {
-  return (
-    <div className="rounded-2xl border border-border bg-card p-6 flex items-center gap-4">
-      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-        <Icon className="h-6 w-6" />
-      </div>
-      <div>
-        <p className="font-display text-3xl text-primary-dark">{value}</p>
-        <p className="text-sm text-muted-foreground">{label}</p>
-      </div>
-    </div>
-  );
-}
 
 function SectionHeader({ title, link, linkLabel }: { title: string; link?: string; linkLabel?: string }) {
   return (

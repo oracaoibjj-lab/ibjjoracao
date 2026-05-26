@@ -33,7 +33,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
       <header className="sticky top-0 z-40 border-b border-border bg-background/85 backdrop-blur">
         <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6">
           <Link to="/" className="flex items-center gap-3">
-            <img src={logo} alt="IBJJ" width={48} height={48} className="h-12 w-12" />
+            <img src={logo} alt="IBJJ" className="h-14 w-auto object-contain" />
             <div className="leading-tight">
               <p className="font-display text-lg text-primary-dark">Mural de Oração</p>
               <p className="text-xs uppercase tracking-[0.18em] text-gold">IBJJ</p>
