@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Heart, Users, Megaphone, Calendar, BookOpen, Sparkles } from "lucide-react";
+import { Heart, Megaphone, Calendar, BookOpen, Sparkles, Users } from "lucide-react";
 import logo from "@/assets/logo-ibjj.png";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
