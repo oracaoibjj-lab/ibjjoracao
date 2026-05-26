@@ -40,7 +40,11 @@ function MuralPage() {
   const { data: prayers, isLoading } = useQuery({
     queryKey: ["prayers", filterCat, filterType],
     queryFn: async () => {
-      let q = supabase.from("prayer_requests").select("*").eq("status", "aprovado").order("created_at", { ascending: false });
+      let q = supabase
+        .from("prayer_requests")
+        .select("*, members(id, full_name, photo_url)")
+        .eq("status", "aprovado")
+        .order("created_at", { ascending: false });
       if (filterCat !== "all") q = q.eq("category", filterCat as never);
       if (filterType !== "all") q = q.eq("type", filterType as never);
       const { data, error } = await q;
