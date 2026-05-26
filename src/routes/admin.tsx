@@ -263,6 +263,31 @@ function MemberForm({ member }: { member?: any }) {
   );
 }
 
+function PhotoUpload({ value, onChange }: { value?: string | null; onChange: (url: string | null) => void }) {
+  const [uploading, setUploading] = useState(false);
+  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { toast.error("Imagem muito grande (máx 5MB)"); return; }
+    setUploading(true);
+    const ext = file.name.split(".").pop() ?? "jpg";
+    const path = `${crypto.randomUUID()}.${ext}`;
+    const { error } = await supabase.storage.from("member-photos").upload(path, file, { upsert: false, contentType: file.type });
+    setUploading(false);
+    if (error) { toast.error(error.message); return; }
+    const { data } = supabase.storage.from("member-photos").getPublicUrl(path);
+    onChange(data.publicUrl);
+    toast.success("Foto enviada");
+  };
+  return (
+    <div className="flex items-center gap-3">
+      {value && <img src={value} alt="" className="h-16 w-16 rounded-full object-cover border border-border" />}
+      <Input type="file" accept="image/*" onChange={handleFile} disabled={uploading} className="flex-1" />
+      {value && <Button type="button" variant="ghost" size="sm" onClick={() => onChange(null)}>Remover</Button>}
+    </div>
+  );
+}
+
 /* -------------------- FAMILIES -------------------- */
 function FamiliesAdmin() {
   const qc = useQueryClient();
