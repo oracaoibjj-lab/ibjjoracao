@@ -183,9 +183,16 @@ function NewPrayerDialog() {
   const [desc, setDesc] = useState("");
   const [cat, setCat] = useState("outros");
   const [type, setType] = useState<"pedido" | "agradecimento">("pedido");
+  const [memberId, setMemberId] = useState<string>("");
   const [anon, setAnon] = useState(false);
   const [whole, setWhole] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const { data: members } = useQuery({
+    queryKey: ["members-options"],
+    enabled: open,
+    queryFn: async () => (await supabase.from("members").select("id, full_name").order("full_name")).data ?? [],
+  });
 
   const open_ = () => {
     if (!user) { navigate({ to: "/login" }); return; }
@@ -195,10 +202,12 @@ function NewPrayerDialog() {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
+    if (!memberId) { toast.error("Selecione o membro a quem este pedido se refere"); return; }
     setLoading(true);
     const { data: prof } = await supabase.from("profiles").select("full_name").eq("id", user.id).maybeSingle();
     const { error } = await supabase.from("prayer_requests").insert({
       author_id: user.id,
+      member_id: memberId,
       title, description: desc,
       category: cat as never, type,
       is_anonymous: anon, is_whole_family: whole,
@@ -210,7 +219,7 @@ function NewPrayerDialog() {
     else {
       toast.success("Pedido enviado! Aguardando aprovação.");
       setOpen(false);
-      setTitle(""); setDesc(""); setCat("outros"); setAnon(false); setWhole(false); setType("pedido");
+      setTitle(""); setDesc(""); setCat("outros"); setAnon(false); setWhole(false); setType("pedido"); setMemberId("");
       qc.invalidateQueries({ queryKey: ["prayers"] });
     }
   };
@@ -222,7 +231,7 @@ function NewPrayerDialog() {
           <Plus className="h-5 w-5 mr-2" /> Novo pedido
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader><DialogTitle className="font-display text-2xl text-primary-dark">Enviar ao mural</DialogTitle></DialogHeader>
         <form onSubmit={submit} className="space-y-4">
           <div className="flex gap-2">
@@ -231,6 +240,15 @@ function NewPrayerDialog() {
                 {t === "pedido" ? "Pedido de oração" : "Agradecimento"}
               </button>
             ))}
+          </div>
+          <div>
+            <Label>{type === "pedido" ? "Para qual membro?" : "Em nome de qual membro?"} *</Label>
+            <Select value={memberId} onValueChange={setMemberId}>
+              <SelectTrigger className="mt-1 h-12 rounded-xl"><SelectValue placeholder="Selecione um membro" /></SelectTrigger>
+              <SelectContent className="max-h-64">
+                {members?.map((m) => <SelectItem key={m.id} value={m.id}>{m.full_name}</SelectItem>)}
+              </SelectContent>
+            </Select>
           </div>
           <div>
             <Label htmlFor="t">Título</Label>
