@@ -9,38 +9,174 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as MuralRouteImport } from './routes/mural'
+import { Route as MembrosRouteImport } from './routes/membros'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as FamiliasRouteImport } from './routes/familias'
+import { Route as AvisosRouteImport } from './routes/avisos'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as MembrosIdRouteImport } from './routes/membros.$id'
 
+const MuralRoute = MuralRouteImport.update({
+  id: '/mural',
+  path: '/mural',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MembrosRoute = MembrosRouteImport.update({
+  id: '/membros',
+  path: '/membros',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FamiliasRoute = FamiliasRouteImport.update({
+  id: '/familias',
+  path: '/familias',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AvisosRoute = AvisosRouteImport.update({
+  id: '/avisos',
+  path: '/avisos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MembrosIdRoute = MembrosIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => MembrosRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
+  '/avisos': typeof AvisosRoute
+  '/familias': typeof FamiliasRoute
+  '/login': typeof LoginRoute
+  '/membros': typeof MembrosRouteWithChildren
+  '/mural': typeof MuralRoute
+  '/membros/$id': typeof MembrosIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
+  '/avisos': typeof AvisosRoute
+  '/familias': typeof FamiliasRoute
+  '/login': typeof LoginRoute
+  '/membros': typeof MembrosRouteWithChildren
+  '/mural': typeof MuralRoute
+  '/membros/$id': typeof MembrosIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
+  '/avisos': typeof AvisosRoute
+  '/familias': typeof FamiliasRoute
+  '/login': typeof LoginRoute
+  '/membros': typeof MembrosRouteWithChildren
+  '/mural': typeof MuralRoute
+  '/membros/$id': typeof MembrosIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/admin'
+    | '/avisos'
+    | '/familias'
+    | '/login'
+    | '/membros'
+    | '/mural'
+    | '/membros/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/admin'
+    | '/avisos'
+    | '/familias'
+    | '/login'
+    | '/membros'
+    | '/mural'
+    | '/membros/$id'
+  id:
+    | '__root__'
+    | '/'
+    | '/admin'
+    | '/avisos'
+    | '/familias'
+    | '/login'
+    | '/membros'
+    | '/mural'
+    | '/membros/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRoute
+  AvisosRoute: typeof AvisosRoute
+  FamiliasRoute: typeof FamiliasRoute
+  LoginRoute: typeof LoginRoute
+  MembrosRoute: typeof MembrosRouteWithChildren
+  MuralRoute: typeof MuralRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/mural': {
+      id: '/mural'
+      path: '/mural'
+      fullPath: '/mural'
+      preLoaderRoute: typeof MuralRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/membros': {
+      id: '/membros'
+      path: '/membros'
+      fullPath: '/membros'
+      preLoaderRoute: typeof MembrosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/familias': {
+      id: '/familias'
+      path: '/familias'
+      fullPath: '/familias'
+      preLoaderRoute: typeof FamiliasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/avisos': {
+      id: '/avisos'
+      path: '/avisos'
+      fullPath: '/avisos'
+      preLoaderRoute: typeof AvisosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,22 +184,36 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/membros/$id': {
+      id: '/membros/$id'
+      path: '/$id'
+      fullPath: '/membros/$id'
+      preLoaderRoute: typeof MembrosIdRouteImport
+      parentRoute: typeof MembrosRoute
+    }
   }
 }
 
+interface MembrosRouteChildren {
+  MembrosIdRoute: typeof MembrosIdRoute
+}
+
+const MembrosRouteChildren: MembrosRouteChildren = {
+  MembrosIdRoute: MembrosIdRoute,
+}
+
+const MembrosRouteWithChildren =
+  MembrosRoute._addFileChildren(MembrosRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRoute,
+  AvisosRoute: AvisosRoute,
+  FamiliasRoute: FamiliasRoute,
+  LoginRoute: LoginRoute,
+  MembrosRoute: MembrosRouteWithChildren,
+  MuralRoute: MuralRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

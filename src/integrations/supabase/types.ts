@@ -14,16 +14,373 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      announcements: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          is_important: boolean
+          publish_date: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          is_important?: boolean
+          publish_date?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          is_important?: boolean
+          publish_date?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      daily_verses: {
+        Row: {
+          created_at: string
+          display_date: string
+          id: string
+          reference: string
+          text: string
+        }
+        Insert: {
+          created_at?: string
+          display_date?: string
+          id?: string
+          reference: string
+          text: string
+        }
+        Update: {
+          created_at?: string
+          display_date?: string
+          id?: string
+          reference?: string
+          text?: string
+        }
+        Relationships: []
+      }
+      families: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      members: {
+        Row: {
+          baptism_date: string | null
+          birth_date: string | null
+          children: string | null
+          conversion_year: number | null
+          created_at: string
+          email: string | null
+          family_id: string | null
+          full_name: string
+          id: string
+          internal_notes: string | null
+          marital_status: Database["public"]["Enums"]["marital_status"] | null
+          phone: string | null
+          photo_url: string | null
+          spouse: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          baptism_date?: string | null
+          birth_date?: string | null
+          children?: string | null
+          conversion_year?: number | null
+          created_at?: string
+          email?: string | null
+          family_id?: string | null
+          full_name: string
+          id?: string
+          internal_notes?: string | null
+          marital_status?: Database["public"]["Enums"]["marital_status"] | null
+          phone?: string | null
+          photo_url?: string | null
+          spouse?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          baptism_date?: string | null
+          birth_date?: string | null
+          children?: string | null
+          conversion_year?: number | null
+          created_at?: string
+          email?: string | null
+          family_id?: string | null
+          full_name?: string
+          id?: string
+          internal_notes?: string | null
+          marital_status?: Database["public"]["Enums"]["marital_status"] | null
+          phone?: string | null
+          photo_url?: string | null
+          spouse?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "members_family_id_fkey"
+            columns: ["family_id"]
+            isOneToOne: false
+            referencedRelation: "families"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prayer_requests: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          author_id: string | null
+          category: Database["public"]["Enums"]["prayer_category"]
+          created_at: string
+          description: string
+          display_name: string | null
+          family_id: string | null
+          id: string
+          is_anonymous: boolean
+          is_whole_family: boolean
+          member_id: string | null
+          status: Database["public"]["Enums"]["prayer_status"]
+          title: string
+          type: Database["public"]["Enums"]["prayer_type"]
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          author_id?: string | null
+          category?: Database["public"]["Enums"]["prayer_category"]
+          created_at?: string
+          description: string
+          display_name?: string | null
+          family_id?: string | null
+          id?: string
+          is_anonymous?: boolean
+          is_whole_family?: boolean
+          member_id?: string | null
+          status?: Database["public"]["Enums"]["prayer_status"]
+          title: string
+          type?: Database["public"]["Enums"]["prayer_type"]
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          author_id?: string | null
+          category?: Database["public"]["Enums"]["prayer_category"]
+          created_at?: string
+          description?: string
+          display_name?: string | null
+          family_id?: string | null
+          id?: string
+          is_anonymous?: boolean
+          is_whole_family?: boolean
+          member_id?: string | null
+          status?: Database["public"]["Enums"]["prayer_status"]
+          title?: string
+          type?: Database["public"]["Enums"]["prayer_type"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prayer_requests_family_id_fkey"
+            columns: ["family_id"]
+            isOneToOne: false
+            referencedRelation: "families"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prayer_requests_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          email: string | null
+          full_name: string | null
+          id: string
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      reactions: {
+        Row: {
+          created_at: string
+          id: string
+          prayer_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          prayer_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          prayer_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reactions_prayer_id_fkey"
+            columns: ["prayer_id"]
+            isOneToOne: false
+            referencedRelation: "prayer_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      services_schedule: {
+        Row: {
+          created_at: string
+          description: string | null
+          end_time: string | null
+          event_date: string | null
+          id: string
+          is_recurring: boolean
+          location: string | null
+          start_time: string | null
+          title: string
+          type: Database["public"]["Enums"]["service_type"]
+          updated_at: string
+          weekday: number | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          end_time?: string | null
+          event_date?: string | null
+          id?: string
+          is_recurring?: boolean
+          location?: string | null
+          start_time?: string | null
+          title: string
+          type?: Database["public"]["Enums"]["service_type"]
+          updated_at?: string
+          weekday?: number | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          end_time?: string | null
+          event_date?: string | null
+          id?: string
+          is_recurring?: boolean
+          location?: string | null
+          start_time?: string | null
+          title?: string
+          type?: Database["public"]["Enums"]["service_type"]
+          updated_at?: string
+          weekday?: number | null
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "member"
+      marital_status: "solteiro" | "casado" | "viuvo" | "divorciado" | "outro"
+      prayer_category:
+        | "saude"
+        | "trabalho"
+        | "familia"
+        | "espiritual"
+        | "viagens"
+        | "gratidao"
+        | "outros"
+      prayer_status: "pendente" | "aprovado" | "rejeitado" | "arquivado"
+      prayer_type: "pedido" | "agradecimento"
+      service_type: "culto" | "oracao" | "estudo" | "evento" | "outro"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +507,21 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "member"],
+      marital_status: ["solteiro", "casado", "viuvo", "divorciado", "outro"],
+      prayer_category: [
+        "saude",
+        "trabalho",
+        "familia",
+        "espiritual",
+        "viagens",
+        "gratidao",
+        "outros",
+      ],
+      prayer_status: ["pendente", "aprovado", "rejeitado", "arquivado"],
+      prayer_type: ["pedido", "agradecimento"],
+      service_type: ["culto", "oracao", "estudo", "evento", "outro"],
+    },
   },
 } as const
