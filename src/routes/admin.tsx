@@ -231,7 +231,7 @@ function MemberForm({ member }: { member?: any }) {
         <DialogHeader><DialogTitle>{member ? "Editar membro" : "Novo membro"}</DialogTitle></DialogHeader>
         <form onSubmit={submit} className="grid grid-cols-2 gap-3">
           <div className="col-span-2"><Label>Nome completo *</Label><Input required value={form.full_name ?? ""} onChange={(e) => setForm({ ...form, full_name: e.target.value })} /></div>
-          <div className="col-span-2"><Label>Foto (URL)</Label><Input value={form.photo_url ?? ""} onChange={(e) => setForm({ ...form, photo_url: e.target.value })} /></div>
+          <div className="col-span-2"><Label>Foto do membro</Label><PhotoUpload value={form.photo_url} onChange={(url) => setForm({ ...form, photo_url: url })} /></div>
           <div><Label>Data de nascimento</Label><Input type="date" value={form.birth_date ?? ""} onChange={(e) => setForm({ ...form, birth_date: e.target.value })} /></div>
           <div><Label>Ano de conversão</Label><Input type="number" value={form.conversion_year ?? ""} onChange={(e) => setForm({ ...form, conversion_year: e.target.value })} /></div>
           <div><Label>Estado civil</Label>
