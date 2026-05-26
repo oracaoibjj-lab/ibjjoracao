@@ -87,7 +87,7 @@ function MuralPage() {
   };
 
   return (
-    <div className="mx-auto max-w-6xl px-4 sm:px-6 py-10">
+    <div className="mx-auto max-w-4xl px-4 sm:px-6 py-10">
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-8">
         <div>
           <h1 className="font-display text-4xl sm:text-5xl text-primary-dark">Mural de Oração</h1>
@@ -96,7 +96,7 @@ function MuralPage() {
         <NewPrayerDialog />
       </div>
 
-      <div className="flex flex-wrap gap-3 mb-8">
+      <div className="flex flex-wrap gap-3 mb-6">
         <Select value={filterType} onValueChange={setFilterType}>
           <SelectTrigger className="w-44 rounded-full bg-card"><SelectValue /></SelectTrigger>
           <SelectContent>
@@ -116,48 +116,61 @@ function MuralPage() {
 
       {isLoading && <p className="text-muted-foreground">Carregando...</p>}
 
-      <div className="grid md:grid-cols-2 gap-5">
+      <div className="rounded-3xl border border-border bg-card overflow-hidden divide-y divide-border">
         {prayers?.map((p) => {
           const reacted = myReactions?.has(p.id);
           const count = counts?.[p.id] ?? 0;
           const isThanks = p.type === "agradecimento";
+          const member = (p as any).members;
           return (
-            <article key={p.id} className={`rounded-3xl border p-6 transition hover:shadow-lg ${isThanks ? "border-gold/40 bg-gold/5" : "border-border bg-card"}`}>
-              <div className="flex items-center gap-2 text-xs uppercase tracking-wider">
-                <span className={`rounded-full px-2.5 py-1 font-semibold ${isThanks ? "bg-gold/25 text-gold-foreground" : "bg-primary/10 text-primary"}`}>
-                  {isThanks ? "Gratidão" : "Pedido"}
-                </span>
-                <span className="text-muted-foreground">{CATEGORIES.find((c) => c.v === p.category)?.l}</span>
-              </div>
-
-              {(p as any).members && (
-                <div className="mt-4 flex items-center gap-3 rounded-2xl bg-background/60 border border-border/60 p-3">
-                  {(p as any).members.photo_url ? (
-                    <img src={(p as any).members.photo_url} alt="" className="h-10 w-10 rounded-full object-cover" />
+            <article key={p.id} className="p-5 sm:p-6 hover:bg-secondary/30 transition-colors">
+              <div className="flex gap-4">
+                {/* Avatar */}
+                <div className="shrink-0">
+                  {member?.photo_url ? (
+                    <img
+                      src={member.photo_url}
+                      alt={member.full_name}
+                      className="h-14 w-14 sm:h-16 sm:w-16 rounded-full object-cover ring-2 ring-primary/15"
+                    />
                   ) : (
-                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-semibold">
-                      {((p as any).members.full_name as string).slice(0, 1)}
+                    <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-full bg-primary/10 flex items-center justify-center text-primary font-display text-xl ring-2 ring-primary/15">
+                      {member ? (member.full_name as string).slice(0, 1) : <Heart className="h-6 w-6" />}
                     </div>
                   )}
-                  <div className="min-w-0">
-                    <p className="text-[10px] uppercase tracking-widest text-muted-foreground">{isThanks ? "Por" : "Para"}</p>
-                    <p className="text-sm font-medium text-primary-dark truncate">{(p as any).members.full_name}</p>
+                </div>
+
+                {/* Content */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-wider">
+                    <span className={`rounded-full px-2.5 py-1 font-semibold ${isThanks ? "bg-gold/25 text-gold-foreground" : "bg-primary/10 text-primary"}`}>
+                      {isThanks ? "Gratidão" : "Pedido"}
+                    </span>
+                    <span className="text-muted-foreground">{CATEGORIES.find((c) => c.v === p.category)?.l}</span>
+                    {member && (
+                      <span className="text-muted-foreground normal-case tracking-normal">
+                        Por <span className="font-medium text-primary-dark">{member.full_name}</span>
+                      </span>
+                    )}
+                  </div>
+
+                  <h3 className="mt-2 font-display text-xl sm:text-2xl text-primary-dark leading-tight">{p.title}</h3>
+                  <p className="mt-2 text-foreground/80 whitespace-pre-wrap text-sm sm:text-base">{p.description}</p>
+
+                  <div className="mt-4 flex items-center justify-between gap-3 flex-wrap">
+                    <p className="text-xs sm:text-sm text-muted-foreground">
+                      {p.is_anonymous ? "Enviado anonimamente" : `Enviado por ${p.display_name ?? "Visitante"}`}
+                      {" • "}
+                      {format(new Date(p.created_at), "dd 'de' MMMM", { locale: ptBR })}
+                    </p>
+                    <button
+                      onClick={() => toggleReact(p.id)}
+                      className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition ${reacted ? "bg-primary text-primary-foreground" : "bg-secondary hover:bg-primary/10"}`}
+                    >
+                      <HandHeart className="h-4 w-4" /> {reacted ? "Orando" : "Estou orando"} {count > 0 && <span className="ml-1 opacity-80">· {count}</span>}
+                    </button>
                   </div>
                 </div>
-              )}
-
-              <h3 className="mt-4 font-display text-2xl text-primary-dark">{p.title}</h3>
-              <p className="mt-2 text-foreground/80 whitespace-pre-wrap">{p.description}</p>
-              <div className="mt-5 flex items-center justify-between">
-                <p className="text-sm text-muted-foreground">
-                  {p.is_anonymous ? "Enviado anonimamente" : `Por ${p.display_name ?? "Membro"}`} • {format(new Date(p.created_at), "dd 'de' MMMM", { locale: ptBR })}
-                </p>
-                <button
-                  onClick={() => toggleReact(p.id)}
-                  className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition ${reacted ? "bg-primary text-primary-foreground" : "bg-secondary hover:bg-primary/10"}`}
-                >
-                  <HandHeart className="h-4 w-4" /> {reacted ? "Orando" : "Estou orando"} {count > 0 && <span className="ml-1 opacity-80">· {count}</span>}
-                </button>
               </div>
             </article>
           );
@@ -165,7 +178,7 @@ function MuralPage() {
       </div>
 
       {prayers && prayers.length === 0 && (
-        <div className="text-center py-20 rounded-3xl border border-dashed border-border">
+        <div className="text-center py-20 rounded-3xl border border-dashed border-border mt-4">
           <Heart className="mx-auto h-12 w-12 text-muted-foreground/40" />
           <p className="mt-4 text-lg text-muted-foreground">Nenhum pedido aprovado ainda.</p>
         </div>
@@ -176,7 +189,6 @@ function MuralPage() {
 
 function NewPrayerDialog() {
   const { user } = useAuth();
-  const navigate = useNavigate();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
@@ -184,8 +196,8 @@ function NewPrayerDialog() {
   const [cat, setCat] = useState("outros");
   const [type, setType] = useState<"pedido" | "agradecimento">("pedido");
   const [memberId, setMemberId] = useState<string>("");
+  const [authorName, setAuthorName] = useState("");
   const [anon, setAnon] = useState(false);
-  const [whole, setWhole] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const { data: members } = useQuery({
@@ -194,32 +206,39 @@ function NewPrayerDialog() {
     queryFn: async () => (await supabase.from("members").select("id, full_name").order("full_name")).data ?? [],
   });
 
-  const open_ = () => {
-    if (!user) { navigate({ to: "/login" }); return; }
-    setOpen(true);
-  };
-
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
     if (!memberId) { toast.error("Selecione o membro a quem este pedido se refere"); return; }
     setLoading(true);
-    const { data: prof } = await supabase.from("profiles").select("full_name").eq("id", user.id).maybeSingle();
+
+    let displayName: string | null = null;
+    if (!anon) {
+      if (user) {
+        const { data: prof } = await supabase.from("profiles").select("full_name").eq("id", user.id).maybeSingle();
+        displayName = prof?.full_name ?? authorName.trim() || null;
+      } else {
+        displayName = authorName.trim() || null;
+      }
+    }
+
     const { error } = await supabase.from("prayer_requests").insert({
-      author_id: user.id,
+      author_id: user?.id ?? null,
       member_id: memberId,
-      title, description: desc,
-      category: cat as never, type,
-      is_anonymous: anon, is_whole_family: whole,
+      title,
+      description: desc,
+      category: cat as never,
+      type,
+      is_anonymous: anon,
+      is_whole_family: false,
       status: "pendente",
-      display_name: prof?.full_name ?? null,
+      display_name: displayName,
     });
     setLoading(false);
     if (error) toast.error(error.message);
     else {
       toast.success("Pedido enviado! Aguardando aprovação.");
       setOpen(false);
-      setTitle(""); setDesc(""); setCat("outros"); setAnon(false); setWhole(false); setType("pedido"); setMemberId("");
+      setTitle(""); setDesc(""); setCat("outros"); setAnon(false); setType("pedido"); setMemberId(""); setAuthorName("");
       qc.invalidateQueries({ queryKey: ["prayers"] });
     }
   };
@@ -227,7 +246,7 @@ function NewPrayerDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button onClick={open_} className="rounded-full bg-primary text-primary-foreground hover:bg-primary-dark h-12 px-6 text-base">
+        <Button className="rounded-full bg-primary text-primary-foreground hover:bg-primary-dark h-12 px-6 text-base">
           <Plus className="h-5 w-5 mr-2" /> Novo pedido
         </Button>
       </DialogTrigger>
@@ -267,13 +286,15 @@ function NewPrayerDialog() {
               </SelectContent>
             </Select>
           </div>
+          {!user && !anon && (
+            <div>
+              <Label htmlFor="author">Seu nome (opcional)</Label>
+              <Input id="author" value={authorName} onChange={(e) => setAuthorName(e.target.value)} maxLength={80} placeholder="Como você quer ser identificado" className="mt-1 h-12 rounded-xl" />
+            </div>
+          )}
           <div className="flex items-center justify-between rounded-xl border border-border p-3">
             <Label htmlFor="anon" className="cursor-pointer">Enviar como anônimo</Label>
             <Switch id="anon" checked={anon} onCheckedChange={setAnon} />
-          </div>
-          <div className="flex items-center justify-between rounded-xl border border-border p-3">
-            <Label htmlFor="wf" className="cursor-pointer">Em nome da família inteira</Label>
-            <Switch id="wf" checked={whole} onCheckedChange={setWhole} />
           </div>
           <Button type="submit" disabled={loading} className="w-full h-12 rounded-xl bg-primary hover:bg-primary-dark text-primary-foreground">
             {loading ? "Enviando..." : "Enviar para aprovação"}
