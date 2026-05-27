@@ -218,19 +218,40 @@ function MemberForm({ member }: { member?: any }) {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const payload = { ...form, conversion_year: form.conversion_year ? Number(form.conversion_year) : null, family_id: form.family_id || null };
+    let finalFamilyId = form.family_id;
+
+    if (form.is_new_family && form.new_family_name) {
+      const { data: newFam, error: famErr } = await supabase.from("families").insert({ name: form.new_family_name }).select("id").single();
+      if (famErr) { toast.error("Erro ao criar família: " + famErr.message); return; }
+      finalFamilyId = newFam.id;
+    }
+
+    const payload = { ...form, conversion_year: form.conversion_year ? Number(form.conversion_year) : null, family_id: finalFamilyId || null };
     delete payload.families;
+    delete payload.is_new_family;
+    delete payload.new_family_name;
+    delete payload.baptism_year_only;
+
     const { error } = member
       ? await supabase.from("members").update(payload).eq("id", member.id)
       : await supabase.from("members").insert(payload);
     if (error) toast.error(error.message);
-    else { toast.success("Salvo"); setOpen(false); qc.invalidateQueries({ queryKey: ["admin-members"] }); qc.invalidateQueries({ queryKey: ["members"] }); qc.invalidateQueries({ queryKey: ["families-with-members"] }); }
+    else { toast.success("Salvo"); setOpen(false); qc.invalidateQueries({ queryKey: ["admin-members"] }); qc.invalidateQueries({ queryKey: ["members"] }); qc.invalidateQueries({ queryKey: ["admin-families"] }); qc.invalidateQueries({ queryKey: ["families-with-members"] }); }
   };
 
   const options = (memberOptions ?? []).filter((m) => !member || m.id !== member.id);
 
   return (
-    <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (o && member) setForm(member); else if (o) setForm({ full_name: "", marital_status: "solteiro" }); }}>
+    <Dialog open={open} onOpenChange={(o) => { 
+        setOpen(o); 
+        if (o) {
+            if (member) {
+                setForm({ ...member, is_child: !!member.is_child, ministry: member.ministry || "" });
+            } else {
+                setForm({ full_name: "", marital_status: "solteiro", is_child: false, ministry: "" });
+            }
+        }
+    }}>
       <DialogTrigger asChild>
         {member ? <Button size="icon" variant="ghost"><Edit2 className="h-4 w-4" /></Button> : <Button className="rounded-full bg-primary text-primary-foreground hover:bg-primary-dark"><Plus className="h-4 w-4 mr-2" />Novo membro</Button>}
       </DialogTrigger>
@@ -249,13 +270,23 @@ function MemberForm({ member }: { member?: any }) {
               </SelectContent>
             </Select>
           </div>
-          <div><Label>Família</Label>
-            <Select value={form.family_id ?? ""} onValueChange={(v) => setForm({ ...form, family_id: v })}>
-              <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-              <SelectContent>
-                {families?.map((f) => <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>)}
-              </SelectContent>
-            </Select>
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <Label>Família</Label>
+              <button type="button" onClick={() => setForm({ ...form, is_new_family: !form.is_new_family, family_id: null, new_family_name: "" })} className="text-xs font-medium text-primary hover:underline">
+                {form.is_new_family ? "Selecionar existente" : "+ Nova família"}
+              </button>
+            </div>
+            {form.is_new_family ? (
+              <Input placeholder="Nome da nova família" value={form.new_family_name ?? ""} onChange={(e) => setForm({ ...form, new_family_name: e.target.value })} required />
+            ) : (
+              <Select value={form.family_id ?? ""} onValueChange={(v) => setForm({ ...form, family_id: v })}>
+                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectContent>
+                  {families?.map((f) => <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            )}
           </div>
           <div className="col-span-2">
             <Label>Cônjuge</Label>
@@ -279,7 +310,28 @@ function MemberForm({ member }: { member?: any }) {
           </div>
           <div><Label>Telefone (admin)</Label><Input value={form.phone ?? ""} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></div>
           <div><Label>E-mail (admin)</Label><Input value={form.email ?? ""} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
-          <div><Label>Data de batismo</Label><Input type="date" value={form.baptism_date ?? ""} onChange={(e) => setForm({ ...form, baptism_date: e.target.value })} /></div>
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <Label>Data de batismo</Label>
+              <button type="button" onClick={() => setForm({ ...form, baptism_year_only: !form.baptism_year_only, baptism_date: "" })} className="text-xs font-medium text-primary hover:underline">
+                {form.baptism_year_only ? "Data exata" : "Só o ano"}
+              </button>
+            </div>
+            {form.baptism_year_only ? (
+              <Input type="number" placeholder="Ano (ex: 2020)" value={form.baptism_date?.substring(0,4) ?? ""} onChange={(e) => setForm({ ...form, baptism_date: e.target.value ? `${e.target.value}-01-01` : "" })} />
+            ) : (
+              <Input type="date" value={form.baptism_date ?? ""} onChange={(e) => setForm({ ...form, baptism_date: e.target.value })} />
+            )}
+          </div>
+          <div><Label>Ministério onde serve</Label><Input placeholder="Ex: Louvor, Recepção..." value={form.ministry ?? ""} onChange={(e) => setForm({ ...form, ministry: e.target.value })} /></div>
+          <div className="flex items-center gap-2 col-span-2 pt-2 border-t border-border/50">
+             <Switch id="is_child" checked={!!form.is_child} onCheckedChange={(v) => setForm({ ...form, is_child: v })} />
+             <Label htmlFor="is_child" className="cursor-pointer">É filho(a) de membro (não é membro propriamente dito)</Label>
+          </div>
+          <div className="flex items-center gap-2 col-span-2">
+             <Switch id="is_converted" checked={!!form.is_converted} onCheckedChange={(v) => setForm({ ...form, is_converted: v })} />
+             <Label htmlFor="is_converted" className="cursor-pointer">É convertido(a)</Label>
+          </div>
           <div className="col-span-2"><Label>Observações internas</Label><Textarea value={form.internal_notes ?? ""} onChange={(e) => setForm({ ...form, internal_notes: e.target.value })} /></div>
           <Button type="submit" className="col-span-2 bg-primary text-primary-foreground hover:bg-primary-dark">Salvar</Button>
         </form>

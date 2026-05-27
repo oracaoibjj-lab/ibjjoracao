@@ -64,9 +64,6 @@ function Home() {
         <div className="absolute inset-0 -z-10 bg-gradient-to-br from-primary/5 via-background to-gold/10" />
         <div className="mx-auto max-w-6xl px-6 py-16 sm:py-24 grid lg:grid-cols-[1fr_auto] gap-10 items-center">
           <div className="text-center lg:text-left">
-            <p className="inline-flex items-center gap-2 rounded-full bg-gold/15 px-4 py-1.5 text-sm font-medium text-gold-foreground">
-              <Sparkles className="h-4 w-4" /> Bem-vindo à IBJJ
-            </p>
             <h1 className="mt-6 font-display text-4xl sm:text-5xl text-primary-dark">
               Bem-vindo
             </h1>

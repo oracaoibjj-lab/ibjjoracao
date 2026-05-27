@@ -275,7 +275,7 @@ function NewPrayerDialog() {
           </div>
           <div>
             <Label htmlFor="d">Descrição</Label>
-            <Textarea id="d" value={desc} onChange={(e) => setDesc(e.target.value)} required maxLength={1000} rows={4} className="mt-1 rounded-xl" />
+            <Textarea id="d" value={desc} onChange={(e) => setDesc(e.target.value)} maxLength={1000} rows={4} className="mt-1 rounded-xl" />
           </div>
           <div>
             <Label>Categoria</Label>

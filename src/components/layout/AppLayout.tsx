@@ -1,7 +1,7 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { Heart, Home, Users, UsersRound, Megaphone, Shield, LogIn, LogOut, Menu, X } from "lucide-react";
 import { useState, type ReactNode } from "react";
-import logo from "@/assets/logo-ibjj.png";
+import logo from "@/assets/logo-ibjj-novo.png";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -34,10 +34,6 @@ export function AppLayout({ children }: { children: ReactNode }) {
         <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6">
           <Link to="/" className="flex items-center gap-3">
             <img src={logo} alt="IBJJ" className="h-14 w-auto object-contain" />
-            <div className="leading-tight">
-              <p className="font-display text-lg text-primary-dark">Mural de Oração</p>
-              <p className="text-xs uppercase tracking-[0.18em] text-gold">IBJJ</p>
-            </div>
           </Link>
 
           <nav className="hidden lg:flex items-center gap-1">
@@ -111,8 +107,8 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
       <footer className="border-t border-border mt-12">
         <div className="mx-auto max-w-7xl px-6 py-8 text-center text-sm text-muted-foreground">
-          <p className="font-display text-base text-primary-dark">IBJJ • Igreja Batista</p>
-          <p className="mt-1">Feito com fé e cuidado para nossa comunidade.</p>
+          <p className="italic text-base">"a igreja do Deus vivo, coluna e baluarte da verdade"</p>
+          <p className="mt-1 text-xs">1 Timóteo 3.15</p>
         </div>
       </footer>
     </div>

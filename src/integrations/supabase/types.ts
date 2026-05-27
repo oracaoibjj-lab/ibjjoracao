@@ -104,7 +104,10 @@ export type Database = {
           full_name: string
           id: string
           internal_notes: string | null
+          is_child: boolean
+          is_converted: boolean | null
           marital_status: Database["public"]["Enums"]["marital_status"] | null
+          ministry: string | null
           phone: string | null
           photo_url: string | null
           spouse: string | null
@@ -122,7 +125,10 @@ export type Database = {
           full_name: string
           id?: string
           internal_notes?: string | null
+          is_child?: boolean
+          is_converted?: boolean | null
           marital_status?: Database["public"]["Enums"]["marital_status"] | null
+          ministry?: string | null
           phone?: string | null
           photo_url?: string | null
           spouse?: string | null
@@ -140,7 +146,10 @@ export type Database = {
           full_name?: string
           id?: string
           internal_notes?: string | null
+          is_child?: boolean
+          is_converted?: boolean | null
           marital_status?: Database["public"]["Enums"]["marital_status"] | null
+          ministry?: string | null
           phone?: string | null
           photo_url?: string | null
           spouse?: string | null

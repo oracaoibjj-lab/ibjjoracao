@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
-import { Search, UsersRound, ChevronDown, User } from "lucide-react";
+import { Search, User } from "lucide-react";
 
 export const Route = createFileRoute("/familias")({
   head: () => ({ meta: [{ title: "Famílias — IBJJ" }] }),
@@ -12,7 +12,6 @@ export const Route = createFileRoute("/familias")({
 
 function FamiliesPage() {
   const [search, setSearch] = useState("");
-  const [openId, setOpenId] = useState<string | null>(null);
 
   const { data: families } = useQuery({
     queryKey: ["families-with-members"],
@@ -38,41 +37,29 @@ function FamiliesPage() {
         <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar família ou membro..." className="h-13 pl-12 rounded-full bg-card" />
       </div>
 
-      <div className="mt-8 space-y-3">
+      <div className="mt-10 space-y-12">
         {filtered?.map((f) => {
-          const isOpen = openId === f.id || !!search;
+          const sortedMembers = [...f.members].sort((a, b) => a.full_name.localeCompare(b.full_name));
           return (
-            <div key={f.id} className="rounded-3xl border border-border bg-card overflow-hidden">
-              <button
-                onClick={() => setOpenId(isOpen ? null : f.id)}
-                className="w-full flex items-center justify-between gap-4 p-5 text-left hover:bg-secondary/40"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gold/20 text-gold-foreground">
-                    <UsersRound className="h-6 w-6" />
-                  </div>
-                  <div>
-                    <p className="font-display text-xl text-primary-dark">Família {f.name}</p>
-                    <p className="text-sm text-muted-foreground">{f.members.length} {f.members.length === 1 ? "membro" : "membros"}</p>
-                  </div>
-                </div>
-                <ChevronDown className={`h-5 w-5 transition-transform ${isOpen ? "rotate-180" : ""}`} />
-              </button>
-              {isOpen && (
-                <div className="border-t border-border p-5 grid sm:grid-cols-2 gap-3">
-                  {f.members.length === 0 && <p className="text-sm text-muted-foreground">Nenhum membro cadastrado.</p>}
-                  {f.members.map((m) => (
-                    <Link key={m.id} to={"/membros/$id" as never} params={{ id: m.id } as never} className="flex items-center gap-3 rounded-xl p-3 hover:bg-secondary">
-                      {m.photo_url ? (
-                        <img src={m.photo_url} alt={m.full_name} className="h-10 w-10 rounded-full object-cover" />
-                      ) : (
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary"><User className="h-5 w-5" /></div>
-                      )}
-                      <span className="font-medium">{m.full_name}</span>
-                    </Link>
-                  ))}
-                </div>
-              )}
+            <div key={f.id}>
+              <div className="flex items-end gap-3 mb-4 pb-2 border-b border-border">
+                <h2 className="font-display text-2xl text-primary-dark">Família {f.name}</h2>
+                <span className="text-sm text-muted-foreground mb-1">({sortedMembers.length} {sortedMembers.length === 1 ? "membro" : "membros"})</span>
+              </div>
+              
+              <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-3">
+                {sortedMembers.length === 0 && <p className="text-sm text-muted-foreground">Nenhum membro cadastrado.</p>}
+                {sortedMembers.map((m) => (
+                  <Link key={m.id} to={"/membros/$id" as never} params={{ id: m.id } as never} className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3 hover:border-primary/40 hover:bg-secondary/20 transition-colors">
+                    {m.photo_url ? (
+                      <img src={m.photo_url} alt={m.full_name} className="h-10 w-10 rounded-full object-cover ring-1 ring-border" />
+                    ) : (
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary"><User className="h-5 w-5" /></div>
+                    )}
+                    <span className="font-medium text-primary-dark">{m.full_name}</span>
+                  </Link>
+                ))}
+              </div>
             </div>
           );
         })}
