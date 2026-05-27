@@ -23,7 +23,10 @@ export const Route = createFileRoute("/atividades")({
 const TIME_SLOTS = [
   { key: "domingo_manha", label: "Domingo — Manhã 8h", short: "Dom 8h", weekday: 0, color: "bg-blue-500/10 text-blue-700 border-blue-200" },
   { key: "domingo_noite", label: "Domingo — Noite 18h", short: "Dom 18h", weekday: 0, color: "bg-amber-500/10 text-amber-700 border-amber-200" },
+  { key: "segunda", label: "Segunda-feira — 19h", short: "Seg 19h", weekday: 1, color: "bg-slate-500/10 text-slate-700 border-slate-200" },
+  { key: "terca", label: "Terça-feira — 19h", short: "Ter 19h", weekday: 2, color: "bg-orange-500/10 text-orange-700 border-orange-200" },
   { key: "quarta", label: "Quarta-feira — 19h", short: "Qua 19h", weekday: 3, color: "bg-emerald-500/10 text-emerald-700 border-emerald-200" },
+  { key: "quinta", label: "Quinta-feira — 19h", short: "Qui 19h", weekday: 4, color: "bg-cyan-500/10 text-cyan-700 border-cyan-200" },
   { key: "sexta", label: "Sexta-feira — 19h", short: "Sex 19h", weekday: 5, color: "bg-violet-500/10 text-violet-700 border-violet-200" },
   { key: "sabado", label: "Sábado — 19h", short: "Sáb 19h", weekday: 6, color: "bg-rose-500/10 text-rose-700 border-rose-200" },
 ] as const;
@@ -143,6 +146,35 @@ function ActivitiesPage() {
     return map;
   }, [activities]);
 
+  const activeColumns = useMemo(() => {
+    const hasMonday = activities?.some((a) => a.time_slot === "segunda") ?? false;
+    const hasTuesday = activities?.some((a) => a.time_slot === "terca") ?? false;
+    const hasThursday = activities?.some((a) => a.time_slot === "quinta") ?? false;
+
+    const cols = [
+      { key: "domingo_manha", label: "Domingo", subLabel: "Manhã | 8h", weekday: 0, time_slot: "domingo_manha" },
+      { key: "domingo_noite", label: "Domingo", subLabel: "Noite | 18h", weekday: 0, time_slot: "domingo_noite" },
+    ];
+
+    if (hasMonday) {
+      cols.push({ key: "segunda", label: "Segunda-feira", subLabel: "19h", weekday: 1, time_slot: "segunda" });
+    }
+    if (hasTuesday) {
+      cols.push({ key: "terca", label: "Terça-feira", subLabel: "19h", weekday: 2, time_slot: "terca" });
+    }
+
+    cols.push({ key: "quarta", label: "Quarta-feira", subLabel: "19h", weekday: 3, time_slot: "quarta" });
+
+    if (hasThursday) {
+      cols.push({ key: "quinta", label: "Quinta-feira", subLabel: "19h", weekday: 4, time_slot: "quinta" });
+    }
+
+    cols.push({ key: "sexta", label: "Sexta-feira", subLabel: "19h", weekday: 5, time_slot: "sexta" });
+    cols.push({ key: "sabado", label: "Sábado", subLabel: "19h", weekday: 6, time_slot: "sabado" });
+
+    return cols;
+  }, [activities]);
+
   const today = new Date();
   const isCurrentMonth = today.getFullYear() === year && today.getMonth() + 1 === month;
 
@@ -202,76 +234,106 @@ function ActivitiesPage() {
 
       {/* Calendar Grid — Desktop */}
       <div className="hidden lg:block rounded-3xl border border-border bg-card overflow-hidden">
-        {/* Column headers */}
-        <div className="grid grid-cols-7 border-b border-border bg-secondary/50">
-          {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"].map((d) => (
-            <div key={d} className="px-2 py-3 text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              {d}
+        {/* Double-layer Header */}
+        <div 
+          className="grid border-b border-border bg-secondary/50 font-display font-bold text-primary-dark divide-x divide-border"
+          style={{ gridTemplateColumns: `repeat(${activeColumns.length}, minmax(0, 1fr))` }}
+        >
+          {/* Sunday Header Spanning 2 Columns */}
+          <div className="col-span-2 py-3 text-center bg-primary/5 text-sm uppercase tracking-wider">
+            Domingo
+          </div>
+          {activeColumns.slice(2).map((col) => (
+            <div key={col.key} className="py-3 text-center text-sm uppercase tracking-wider">
+              {col.label}
             </div>
           ))}
         </div>
 
-        {/* Weeks */}
+        {/* Sub-header (Times/Types) */}
+        <div 
+          className="grid border-b border-border bg-secondary/20 text-center text-xs font-semibold text-muted-foreground uppercase tracking-wider divide-x divide-border"
+          style={{ gridTemplateColumns: `repeat(${activeColumns.length}, minmax(0, 1fr))` }}
+        >
+          {activeColumns.map((col) => (
+            <div key={col.key} className="px-2 py-2.5">
+              {col.subLabel}
+            </div>
+          ))}
+        </div>
+
+        {/* Weeks rows */}
         {weeks.map((week, wi) => (
-          <div key={wi} className="grid grid-cols-7 border-b border-border last:border-b-0">
-            {week.days.map((day, di) => {
-              const isToday = isCurrentMonth && day === today.getDate();
-              const dayActivities = day
-                ? TIME_SLOTS.filter((s) => s.weekday === di).map((s) => ({
-                    slot: s,
-                    activity: actsByDaySlot[`${day}-${s.key}`],
-                  }))
-                : [];
+          <div 
+            key={wi} 
+            className="grid border-b border-border last:border-b-0 divide-x divide-border"
+            style={{ gridTemplateColumns: `repeat(${activeColumns.length}, minmax(0, 1fr))` }}
+          >
+            {activeColumns.map((col) => {
+              const day = week.days[col.weekday];
+              const activity = day ? actsByDaySlot[`${day}-${col.time_slot}`] : null;
+              const slot = getSlotInfo(col.time_slot);
+              const isToday = day !== null && isCurrentMonth && day === today.getDate();
 
               return (
                 <div
-                  key={di}
-                  className={`min-h-[130px] border-r border-border last:border-r-0 p-2 transition
-                    ${day === null ? "bg-secondary/20" : "hover:bg-secondary/30"}
+                  key={col.key}
+                  className={`min-h-[145px] p-2.5 transition group relative flex flex-col justify-between
+                    ${day === null ? "bg-secondary/10" : "hover:bg-secondary/20"}
                     ${isToday ? "bg-primary/5 ring-inset ring-2 ring-primary/20" : ""}`}
                 >
                   {day !== null && (
                     <>
-                      <div className="flex items-center justify-between mb-1">
-                        <span className={`text-sm font-semibold ${isToday ? "bg-primary text-primary-foreground rounded-full h-7 w-7 flex items-center justify-center" : "text-muted-foreground"}`}>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className={`text-xs font-bold ${isToday ? "bg-primary text-primary-foreground rounded-full h-6 w-6 flex items-center justify-center" : "text-muted-foreground"}`}>
                           {day}
                         </span>
-                        {isAdmin && dayActivities.some((da) => !da.activity) && (
+                        
+                        {isAdmin && !activity && (
                           <button
-                            onClick={() => {
-                              const emptySlot = dayActivities.find((da) => !da.activity);
-                              if (emptySlot) handleAdd(day, emptySlot.slot.key);
-                            }}
-                            className="h-6 w-6 rounded-full flex items-center justify-center text-muted-foreground hover:bg-primary/10 hover:text-primary transition opacity-0 group-hover:opacity-100"
-                            title="Adicionar atividade"
+                            onClick={() => handleAdd(day, col.time_slot)}
+                            className="h-5 w-5 rounded-full flex items-center justify-center text-muted-foreground hover:bg-primary/10 hover:text-primary transition opacity-0 group-hover:opacity-100"
+                            title={`Adicionar programação`}
                           >
                             <Plus className="h-3.5 w-3.5" />
                           </button>
                         )}
                       </div>
 
-                      {dayActivities.map(({ slot, activity }) =>
-                        activity ? (
-                          <button
-                            key={slot.key}
-                            onClick={() => setSelectedActivity(activity)}
-                            className={`w-full text-left rounded-lg border px-2 py-1.5 mb-1 text-xs transition cursor-pointer hover:shadow-sm ${slot.color}`}
-                          >
-                            <p className="font-semibold truncate">{activity.title}</p>
-                            {activity.dirigente && (
-                              <p className="text-[10px] opacity-75 truncate">Dir: {activity.dirigente}</p>
-                            )}
-                            {activity.pregacao && (
-                              <p className="text-[10px] opacity-75 truncate">Preg: {activity.pregacao}</p>
-                            )}
-                            {activity.estudo && (
-                              <p className="text-[10px] opacity-75 truncate font-medium">Est: {activity.estudo}</p>
-                            )}
-                            {activity.texto && (
-                              <p className="text-[10px] opacity-75 truncate italic">Txt: {activity.texto}</p>
-                            )}
-                          </button>
-                        ) : null
+                      {activity ? (
+                        <button
+                          onClick={() => setSelectedActivity(activity)}
+                          className={`w-full text-left rounded-xl border p-2.5 text-xs transition cursor-pointer hover:shadow-md hover:scale-[1.01] duration-150 flex-1 flex flex-col justify-between min-h-[90px]
+                            ${slot?.color ?? "bg-card text-foreground border-border"}`}
+                        >
+                          <div>
+                            <p className="font-display font-bold text-[13px] text-primary-dark leading-snug mb-1.5 break-words line-clamp-2">
+                              {activity.title}
+                            </p>
+                            
+                            <div className="space-y-0.5 text-[10.5px] opacity-90">
+                              {activity.dirigente && (
+                                <p className="truncate"><span className="font-semibold">Dirigente:</span> {activity.dirigente}</p>
+                              )}
+                              {activity.leitura && (
+                                <p className="truncate"><span className="font-semibold">Leitura:</span> {activity.leitura}</p>
+                              )}
+                              {activity.texto && (
+                                <p className="truncate"><span className="font-semibold">Texto:</span> {activity.texto}</p>
+                              )}
+                              {activity.pregacao && (
+                                <p className="truncate"><span className="font-semibold">Pregação:</span> {activity.pregacao}</p>
+                              )}
+                              {activity.estudo && (
+                                <p className="truncate"><span className="font-semibold">Estudo:</span> {activity.estudo}</p>
+                              )}
+                            </div>
+                          </div>
+                        </button>
+                      ) : (
+                        <div className="flex-1">
+                          {/* Empty state spacer */}
+                        </div>
                       )}
                     </>
                   )}
@@ -933,6 +995,24 @@ function parseCalendarText(rawText: string, month: string): Omit<Activity, "id">
       flushActivity();
       currentSlot = "sabado";
       currentTitle = "Mocidade";
+      continue;
+    }
+    if (/Segunda/i.test(line)) {
+      flushActivity();
+      currentSlot = "segunda";
+      currentTitle = line;
+      continue;
+    }
+    if (/Ter[cç]a/i.test(line)) {
+      flushActivity();
+      currentSlot = "terca";
+      currentTitle = line;
+      continue;
+    }
+    if (/Quinta/i.test(line)) {
+      flushActivity();
+      currentSlot = "quinta";
+      currentTitle = line;
       continue;
     }
 
