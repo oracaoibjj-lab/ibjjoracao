@@ -223,8 +223,9 @@ function MuralPage() {
       }
       const mes = filterMonth !== "all" ? `_${filterMonth}` : "";
       pdf.save(`mural_oracao${mes}_ibjj.pdf`);
-    } catch (e) {
-      toast.error("Erro ao gerar PDF. Tente novamente.");
+    } catch (e: any) {
+      console.error("Erro ao gerar PDF:", e);
+      toast.error(`Erro ao gerar PDF: ${e?.message || String(e)}`);
     } finally {
       setExportingPdf(false);
     }
