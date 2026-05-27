@@ -6,25 +6,25 @@ import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-type NavItem = { to: string; label: string; icon: typeof Home; adminOnly?: boolean };
+type NavItem = { to: string; label: string; icon: typeof Home; adminOnly?: boolean; memberOnly?: boolean };
 
 const NAV: NavItem[] = [
   { to: "/", label: "Início", icon: Home },
   { to: "/mural", label: "Mural", icon: Heart },
   { to: "/atividades", label: "Atividades", icon: Calendar },
-  { to: "/membros", label: "Membros", icon: Users },
-  { to: "/familias", label: "Famílias", icon: UsersRound },
+  { to: "/membros", label: "Membros", icon: Users, memberOnly: true },
+  { to: "/familias", label: "Famílias", icon: UsersRound, memberOnly: true },
   { to: "/avisos", label: "Avisos", icon: Megaphone },
   { to: "/admin", label: "Administração", icon: Shield, adminOnly: true },
 ];
 
 export function AppLayout({ children }: { children: ReactNode }) {
-  const { user, isAdmin, signOut, loading } = useAuth();
+  const { user, isAdmin, isApproved, signOut, loading } = useAuth();
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [open, setOpen] = useState(false);
 
-  const items = NAV.filter((n) => !n.adminOnly || isAdmin);
+  const items = NAV.filter((n) => (!n.adminOnly || isAdmin) && (!n.memberOnly || isApproved));
   const isLogin = pathname === "/login";
 
   if (isLogin) return <>{children}</>;
@@ -103,6 +103,12 @@ export function AppLayout({ children }: { children: ReactNode }) {
           </div>
         )}
       </header>
+
+      {user && !isApproved && !loading && (
+        <div className="bg-amber-500/10 border-b border-amber-500/20 text-amber-800 px-4 py-3 text-center text-sm font-medium">
+          Sua conta foi criada e está aguardando aprovação do administrador para acesso completo.
+        </div>
+      )}
 
       <main className="flex-1">{children}</main>
 

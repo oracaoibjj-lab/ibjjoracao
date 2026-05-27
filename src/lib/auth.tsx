@@ -6,6 +6,7 @@ type AuthCtx = {
   user: User | null;
   session: Session | null;
   isAdmin: boolean;
+  isApproved: boolean;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: string | null }>;
@@ -18,6 +19,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isApproved, setIsApproved] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -26,29 +28,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(sess?.user ?? null);
       if (sess?.user) {
         setTimeout(() => {
-          supabase
-            .from("user_roles")
-            .select("role")
-            .eq("user_id", sess.user.id)
-            .eq("role", "admin")
-            .maybeSingle()
+          supabase.from("user_roles").select("role").eq("user_id", sess.user.id).eq("role", "admin").maybeSingle()
             .then(({ data }) => setIsAdmin(!!data));
+          supabase.from("profiles").select("is_approved").eq("id", sess.user.id).maybeSingle()
+            .then(({ data }) => setIsApproved(!!data?.is_approved));
         }, 0);
       } else {
         setIsAdmin(false);
+        setIsApproved(false);
       }
     });
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
       setUser(data.session?.user ?? null);
       if (data.session?.user) {
-        supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", data.session.user.id)
-          .eq("role", "admin")
-          .maybeSingle()
+        supabase.from("user_roles").select("role").eq("user_id", data.session.user.id).eq("role", "admin").maybeSingle()
           .then(({ data: r }) => setIsAdmin(!!r));
+        supabase.from("profiles").select("is_approved").eq("id", data.session.user.id).maybeSingle()
+          .then(({ data: p }) => setIsApproved(!!p?.is_approved));
       }
       setLoading(false);
     });
@@ -73,7 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = async () => { await supabase.auth.signOut(); };
 
   return (
-    <AuthContext.Provider value={{ user, session, isAdmin, loading, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={{ user, session, isAdmin, isApproved, loading, signIn, signUp, signOut }}>
       {children}
     </AuthContext.Provider>
   );

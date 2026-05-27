@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Check, X, Archive, Edit2, Trash2, Plus, Users, Heart, Megaphone, Calendar, BookOpen, ShieldAlert } from "lucide-react";
+import { Check, X, Archive, Edit2, Trash2, Plus, Users, Heart, Megaphone, Calendar, BookOpen, ShieldAlert, UserPlus, UserCheck } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -54,6 +54,7 @@ function AdminPage() {
       <Tabs defaultValue="prayers" className="mt-10">
         <TabsList className="bg-secondary rounded-full p-1 h-auto flex flex-wrap">
           <TabsTrigger value="prayers" className="rounded-full px-5 py-2.5"><Heart className="h-4 w-4 mr-2" />Pedidos</TabsTrigger>
+          <TabsTrigger value="users" className="rounded-full px-5 py-2.5"><UserPlus className="h-4 w-4 mr-2" />Usuários</TabsTrigger>
           <TabsTrigger value="members" className="rounded-full px-5 py-2.5"><Users className="h-4 w-4 mr-2" />Membros</TabsTrigger>
           <TabsTrigger value="families" className="rounded-full px-5 py-2.5">Famílias</TabsTrigger>
           <TabsTrigger value="announcements" className="rounded-full px-5 py-2.5"><Megaphone className="h-4 w-4 mr-2" />Avisos</TabsTrigger>
@@ -61,6 +62,7 @@ function AdminPage() {
           <TabsTrigger value="verses" className="rounded-full px-5 py-2.5"><BookOpen className="h-4 w-4 mr-2" />Versículos</TabsTrigger>
         </TabsList>
         <TabsContent value="prayers" className="mt-6"><PrayersAdmin /></TabsContent>
+        <TabsContent value="users" className="mt-6"><UsersAdmin /></TabsContent>
         <TabsContent value="members" className="mt-6"><MembersAdmin /></TabsContent>
         <TabsContent value="families" className="mt-6"><FamiliesAdmin /></TabsContent>
         <TabsContent value="announcements" className="mt-6"><AnnouncementsAdmin /></TabsContent>
@@ -104,6 +106,44 @@ function Stat({ label, value, icon: Icon, highlight }: { label: string; value: n
       <Icon className={`h-5 w-5 ${highlight ? "text-gold-foreground" : "text-primary"}`} />
       <p className="mt-3 font-display text-3xl text-primary-dark">{value}</p>
       <p className="text-sm text-muted-foreground">{label}</p>
+    </div>
+  );
+}
+
+/* -------------------- USERS APPROVAL -------------------- */
+function UsersAdmin() {
+  const qc = useQueryClient();
+  const { data } = useQuery({
+    queryKey: ["admin-users-pending"],
+    queryFn: async () => {
+      const { data } = await supabase.from("profiles").select("*").eq("is_approved", false).order("created_at", { ascending: false });
+      return data ?? [];
+    },
+  });
+
+  const approve = async (id: string) => {
+    const { error } = await supabase.from("profiles").update({ is_approved: true }).eq("id", id);
+    if (error) toast.error(error.message);
+    else { toast.success("Conta aprovada!"); qc.invalidateQueries({ queryKey: ["admin-users-pending"] }); }
+  };
+
+  return (
+    <div className="space-y-4">
+      <h2 className="text-xl font-display text-primary-dark">Usuários Aguardando Aprovação</h2>
+      {data?.length === 0 && <p className="text-muted-foreground">Nenhuma conta pendente.</p>}
+      <div className="grid gap-3">
+        {data?.map((u) => (
+          <div key={u.id} className="flex items-center justify-between rounded-xl border border-border bg-card p-4">
+            <div>
+              <p className="font-semibold text-primary-dark">{u.full_name}</p>
+              <p className="text-sm text-muted-foreground">{u.email}</p>
+            </div>
+            <Button onClick={() => approve(u.id)} className="rounded-full bg-emerald-600 hover:bg-emerald-700 text-white">
+              <UserCheck className="h-4 w-4 mr-2" /> Aprovar Conta
+            </Button>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

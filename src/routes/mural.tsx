@@ -31,7 +31,7 @@ export const Route = createFileRoute("/mural")({
 });
 
 function MuralPage() {
-  const { user } = useAuth();
+  const { user, isApproved } = useAuth();
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [filterCat, setFilterCat] = useState<string>("all");
@@ -53,11 +53,23 @@ function MuralPage() {
     },
   });
 
+  const getSessionId = () => {
+    let sid = localStorage.getItem("ibjj_session_id");
+    if (!sid) {
+      sid = crypto.randomUUID();
+      localStorage.setItem("ibjj_session_id", sid);
+    }
+    return sid;
+  };
+
   const { data: myReactions } = useQuery({
     queryKey: ["my-reactions", user?.id],
-    enabled: !!user,
     queryFn: async () => {
-      const { data } = await supabase.from("reactions").select("prayer_id").eq("user_id", user!.id);
+      const sid = getSessionId();
+      let q = supabase.from("reactions").select("prayer_id");
+      if (user) q = q.eq("user_id", user.id);
+      else q = q.eq("session_id", sid);
+      const { data } = await q;
       return new Set((data ?? []).map((r) => r.prayer_id));
     },
   });
@@ -75,12 +87,19 @@ function MuralPage() {
   });
 
   const toggleReact = async (prayerId: string) => {
-    if (!user) { navigate({ to: "/login" }); return; }
+    const sid = getSessionId();
     const has = myReactions?.has(prayerId);
     if (has) {
-      await supabase.from("reactions").delete().eq("prayer_id", prayerId).eq("user_id", user.id);
+      let q = supabase.from("reactions").delete().eq("prayer_id", prayerId);
+      if (user) q = q.eq("user_id", user.id);
+      else q = q.eq("session_id", sid);
+      await q;
     } else {
-      await supabase.from("reactions").insert({ prayer_id: prayerId, user_id: user.id });
+      await supabase.from("reactions").insert({ 
+        prayer_id: prayerId, 
+        user_id: user?.id ?? null,
+        session_id: !user ? sid : null
+      });
     }
     qc.invalidateQueries({ queryKey: ["my-reactions"] });
     qc.invalidateQueries({ queryKey: ["reaction-counts"] });
@@ -93,7 +112,7 @@ function MuralPage() {
           <h1 className="font-display text-4xl sm:text-5xl text-primary-dark">Mural de Oração</h1>
           <p className="mt-2 text-muted-foreground text-lg">Compartilhe pedidos, agradeça e ore pelos irmãos.</p>
         </div>
-        <NewPrayerDialog />
+        {user && isApproved && <NewPrayerDialog />}
       </div>
 
       <div className="flex flex-wrap gap-3 mb-6">
