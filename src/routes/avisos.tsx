@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Calendar, Megaphone, Star, Cake, User } from "lucide-react";
-import { format, startOfWeek, endOfWeek, isSameDay, addDays, differenceInYears } from "date-fns";
+import { Megaphone, Star, Cake, User } from "lucide-react";
+import { format, startOfWeek, endOfWeek, isSameDay, differenceInYears } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 export const Route = createFileRoute("/avisos")({
@@ -10,7 +10,7 @@ export const Route = createFileRoute("/avisos")({
   component: AnnouncementsPage,
 });
 
-const weekdays = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+
 
 function AnnouncementsPage() {
   const { data: announcements } = useQuery({
@@ -21,13 +21,6 @@ function AnnouncementsPage() {
     },
   });
 
-  const { data: schedule } = useQuery({
-    queryKey: ["schedule"],
-    queryFn: async () => {
-      const { data } = await supabase.from("services_schedule").select("*").order("weekday").order("start_time");
-      return data ?? [];
-    },
-  });
 
   const { data: birthdays } = useQuery({
     queryKey: ["birthdays-week"],
@@ -126,33 +119,7 @@ function AnnouncementsPage() {
         </div>
       </section>
 
-      {/* PROGRAMAÇÕES */}
-      <section>
-        <h2 className="font-display text-3xl text-primary-dark flex items-center gap-3">
-          <Calendar className="h-7 w-7 text-primary" /> Programações
-        </h2>
-        <div className="mt-6 grid sm:grid-cols-2 gap-4">
-          {schedule?.map((s) => (
-            <div key={s.id} className="rounded-3xl border border-border bg-card p-6">
-              <p className="font-display text-xl text-primary-dark">{s.title}</p>
-              {s.description && <p className="mt-1 text-sm text-muted-foreground">{s.description}</p>}
-              <div className="mt-3 flex flex-wrap gap-2 text-sm">
-                {s.weekday !== null && s.weekday !== undefined && (
-                  <span className="rounded-full bg-primary/10 px-3 py-1 text-primary">{weekdays[s.weekday]}</span>
-                )}
-                {s.event_date && (
-                  <span className="rounded-full bg-gold/15 px-3 py-1 text-gold-foreground">{format(new Date(s.event_date), "dd/MM/yyyy")}</span>
-                )}
-                {s.start_time && (
-                  <span className="rounded-full bg-secondary px-3 py-1">{s.start_time.slice(0, 5)}{s.end_time ? `–${s.end_time.slice(0, 5)}` : ""}</span>
-                )}
-                {s.location && <span className="rounded-full bg-secondary px-3 py-1">{s.location}</span>}
-              </div>
-            </div>
-          ))}
-          {schedule?.length === 0 && <p className="text-muted-foreground">Nenhuma programação cadastrada.</p>}
-        </div>
-      </section>
+
     </div>
   );
 }

@@ -12,8 +12,8 @@ const NAV: NavItem[] = [
   { to: "/", label: "Início", icon: Home },
   { to: "/mural", label: "Mural", icon: Heart },
   { to: "/atividades", label: "Atividades", icon: Calendar },
-  { to: "/membros", label: "Membros", icon: Users, memberOnly: true },
-  { to: "/familias", label: "Famílias", icon: UsersRound, memberOnly: true },
+  { to: "/membros", label: "Membros", icon: Users },
+  { to: "/familias", label: "Famílias", icon: UsersRound },
   { to: "/avisos", label: "Avisos", icon: Megaphone },
   { to: "/admin", label: "Administração", icon: Shield, adminOnly: true },
 ];
