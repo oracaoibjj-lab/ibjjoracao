@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Heart, Plus, HandHeart, Printer } from "lucide-react";
+import { Heart, Plus, HandHeart, Printer, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
@@ -37,6 +37,8 @@ function MuralPage() {
   const [filterCat, setFilterCat] = useState<string>("all");
   const [filterType, setFilterType] = useState<string>("all");
   const [filterMonth, setFilterMonth] = useState<string>("all");
+  const [exportingPdf, setExportingPdf] = useState(false);
+  const pdfContainerRef = useRef<HTMLDivElement>(null);
 
   const { data: prayers, isLoading } = useQuery({
     queryKey: ["prayers", filterCat, filterType],
@@ -175,6 +177,59 @@ function MuralPage() {
     }
   };
 
+  const handleExportPdf = async () => {
+    const isMobile = window.innerWidth < 640;
+    if (!isMobile) {
+      window.print();
+      return;
+    }
+    if (!pdfContainerRef.current) return;
+    setExportingPdf(true);
+    try {
+      const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
+        import("html2canvas"),
+        import("jspdf"),
+      ]);
+      const canvas = await html2canvas(pdfContainerRef.current, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: "#ffffff",
+        logging: false,
+      });
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+      const pageW = pdf.internal.pageSize.getWidth();
+      const pageH = pdf.internal.pageSize.getHeight();
+      const margin = 10;
+      const imgW = pageW - margin * 2;
+      const imgH = (canvas.height * imgW) / canvas.width;
+      // Divide a imagem em páginas se for maior que uma página A4
+      let srcY = 0;
+      let firstPage = true;
+      const pageContentH = pageH - margin * 2;
+      const pixelsPerMm = canvas.height / imgH;
+      while (srcY < canvas.height) {
+        const slicePixelH = Math.min(pageContentH * pixelsPerMm, canvas.height - srcY);
+        const sliceCanvas = document.createElement("canvas");
+        sliceCanvas.width = canvas.width;
+        sliceCanvas.height = slicePixelH;
+        const ctx = sliceCanvas.getContext("2d")!;
+        ctx.drawImage(canvas, 0, srcY, canvas.width, slicePixelH, 0, 0, canvas.width, slicePixelH);
+        if (!firstPage) pdf.addPage();
+        const sliceH = (slicePixelH / pixelsPerMm);
+        pdf.addImage(sliceCanvas.toDataURL("image/png"), "PNG", margin, margin, imgW, sliceH);
+        srcY += slicePixelH;
+        firstPage = false;
+      }
+      const mes = filterMonth !== "all" ? `_${filterMonth}` : "";
+      pdf.save(`mural_oracao${mes}_ibjj.pdf`);
+    } catch (e) {
+      toast.error("Erro ao gerar PDF. Tente novamente.");
+    } finally {
+      setExportingPdf(false);
+    }
+  };
+
   return (
     <div className="mx-auto max-w-4xl px-4 sm:px-6 py-10">
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-8">
@@ -184,11 +239,16 @@ function MuralPage() {
         </div>
         <div className="flex gap-2 print:hidden">
           <Button
-            onClick={() => window.print()}
+            onClick={handleExportPdf}
+            disabled={exportingPdf}
             variant="outline"
             className="rounded-full h-12 px-6 text-base border border-border bg-card hover:bg-secondary"
           >
-            <Printer className="h-5 w-5 mr-2" /> Exportar PDF
+            {exportingPdf ? (
+              <><Loader2 className="h-5 w-5 mr-2 animate-spin" /> Gerando PDF...</>
+            ) : (
+              <><Printer className="h-5 w-5 mr-2" /> Exportar PDF</>
+            )}
           </Button>
           {(!user || isApproved || isAdmin) && <NewPrayerDialog />}
         </div>
@@ -225,7 +285,7 @@ function MuralPage() {
 
       {isLoading && <p className="text-muted-foreground">Carregando...</p>}
 
-      <div className="rounded-3xl border border-border bg-card overflow-hidden divide-y divide-border">
+      <div ref={pdfContainerRef} className="rounded-3xl border border-border bg-card overflow-hidden divide-y divide-border">
         {filteredPrayers.map((p) => {
           const reacted = myReactions?.has(p.id);
           const count = counts?.[p.id] ?? 0;
