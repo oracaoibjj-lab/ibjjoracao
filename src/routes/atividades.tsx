@@ -117,7 +117,6 @@ function ActivitiesPage() {
   const [editActivity, setEditActivity] = useState<Activity | null>(null);
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
   const [showAdd, setShowAdd] = useState(false);
-  const [showImport, setShowImport] = useState(false);
   const [addDefaults, setAddDefaults] = useState<{ day?: number; time_slot?: string }>({});
 
   const [year, month] = parseMonth(currentMonth);
@@ -202,13 +201,7 @@ function ActivitiesPage() {
             >
               <Plus className="h-4 w-4 mr-2" /> Nova atividade
             </Button>
-            <Button
-              variant="outline"
-              className="rounded-full"
-              onClick={() => setShowImport(true)}
-            >
-              <Upload className="h-4 w-4 mr-2" /> Importar imagem
-            </Button>
+
           </div>
         )}
       </div>
@@ -327,6 +320,12 @@ function ActivitiesPage() {
                               {activity.estudo && (
                                 <p className="truncate"><span className="font-semibold">Estudo:</span> {activity.estudo}</p>
                               )}
+                              {activity.local && (
+                                <p className="truncate"><span className="font-semibold">Local:</span> {activity.local}</p>
+                              )}
+                              {activity.notes && (
+                                <p className="truncate text-muted-foreground italic"><span className="font-semibold">Obs:</span> {activity.notes}</p>
+                              )}
                             </div>
                           </div>
                         </button>
@@ -424,7 +423,7 @@ function ActivitiesPage() {
       {(!activities || activities.length === 0) && (
         <div className="hidden lg:block text-center py-8 text-muted-foreground">
           Nenhuma atividade cadastrada para este mês.
-          {isAdmin && " Clique em 'Nova atividade' ou 'Importar imagem' para começar."}
+          {isAdmin && " Clique em 'Nova atividade' para começar."}
         </div>
       )}
 
@@ -448,17 +447,7 @@ function ActivitiesPage() {
         />
       )}
 
-      {/* Import Dialog */}
-      {showImport && (
-        <ImportDialog
-          month={currentMonth}
-          onClose={() => setShowImport(false)}
-          onImported={() => {
-            setShowImport(false);
-            qc.invalidateQueries({ queryKey: ["monthly-activities", currentMonth] });
-          }}
-        />
-      )}
+
 
       {/* View Details Dialog */}
       {selectedActivity && (
@@ -690,340 +679,4 @@ function ActivityDialog({
       </DialogContent>
     </Dialog>
   );
-}
-
-/* ---- Import from Image Dialog ---- */
-function ImportDialog({
-  month,
-  onClose,
-  onImported,
-}: {
-  month: string;
-  onClose: () => void;
-  onImported: () => void;
-}) {
-  const [step, setStep] = useState<"upload" | "processing" | "review" | "saving">("upload");
-  const [progress, setProgress] = useState(0);
-  const [extractedText, setExtractedText] = useState("");
-  const [parsed, setParsed] = useState<Omit<Activity, "id">[]>([]);
-  const fileRef = useRef<HTMLInputElement>(null);
-
-  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setStep("processing");
-    setProgress(0);
-
-    try {
-      const Tesseract = await import("tesseract.js");
-      const result = await Tesseract.recognize(file, "por", {
-        logger: (m: any) => {
-          if (m.status === "recognizing text") {
-            setProgress(Math.round(m.progress * 100));
-          }
-        },
-      });
-
-      const text = result.data.text;
-      setExtractedText(text);
-
-      // Parse extracted text into activities
-      const activities = parseCalendarText(text, month);
-      setParsed(activities);
-      setStep("review");
-    } catch (err: any) {
-      toast.error("Erro ao processar imagem: " + (err.message || err));
-      setStep("upload");
-    }
-  };
-
-  const handleSave = async () => {
-    if (parsed.length === 0) { toast.error("Nenhuma atividade para salvar."); return; }
-
-    setStep("saving");
-
-    // Delete existing activities for this month first
-    await supabase.from("monthly_activities").delete().eq("month", month);
-
-    // Insert all parsed activities
-    const payload = parsed.map((a) => ({
-      month: a.month,
-      day: a.day,
-      time_slot: a.time_slot,
-      title: a.title,
-      dirigente: a.dirigente || null,
-      leitura: a.leitura || null,
-      texto: a.texto || null,
-      pregacao: a.pregacao || null,
-      estudo: a.estudo || null,
-      local: a.local || null,
-      notes: a.notes || null,
-    }));
-
-    const { error } = await supabase.from("monthly_activities").insert(payload);
-    if (error) { toast.error(error.message); setStep("review"); return; }
-
-    toast.success(`${parsed.length} atividades importadas com sucesso!`);
-    onImported();
-  };
-
-  const removeParsed = (idx: number) => {
-    setParsed((p) => p.filter((_, i) => i !== idx));
-  };
-
-  return (
-    <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Importar calendário de imagem</DialogTitle>
-        </DialogHeader>
-
-        {step === "upload" && (
-          <div className="text-center py-8">
-            <Upload className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
-            <p className="text-muted-foreground mb-4">
-              Envie uma imagem do calendário de cultos (como a tabela mensal da igreja).
-            </p>
-            <input
-              ref={fileRef}
-              type="file"
-              accept="image/*"
-              onChange={handleFile}
-              className="hidden"
-            />
-            <Button onClick={() => fileRef.current?.click()} className="rounded-full bg-primary text-primary-foreground hover:bg-primary-dark">
-              <Upload className="h-4 w-4 mr-2" /> Selecionar imagem
-            </Button>
-            <p className="mt-4 text-xs text-muted-foreground">
-              O sistema vai tentar extrair os textos automaticamente usando OCR (reconhecimento óptico). Você poderá revisar e editar antes de salvar.
-            </p>
-          </div>
-        )}
-
-        {step === "processing" && (
-          <div className="text-center py-12">
-            <Loader2 className="mx-auto h-12 w-12 text-primary animate-spin mb-4" />
-            <p className="font-display text-xl text-primary-dark mb-2">Processando imagem...</p>
-            <div className="mx-auto max-w-xs bg-secondary rounded-full h-3 overflow-hidden">
-              <div
-                className="bg-primary h-3 rounded-full transition-all duration-300"
-                style={{ width: `${progress}%` }}
-              />
-            </div>
-            <p className="mt-2 text-sm text-muted-foreground">{progress}% concluído</p>
-          </div>
-        )}
-
-        {step === "review" && (
-          <div>
-            <p className="text-sm text-muted-foreground mb-3">
-              {parsed.length} atividades encontradas. Revise abaixo e clique em "Salvar tudo" para importar.
-            </p>
-
-            {parsed.length === 0 && (
-              <div className="rounded-2xl border border-border bg-secondary/30 p-6 text-center">
-                <p className="text-muted-foreground">Nenhuma atividade reconhecida automaticamente.</p>
-                <p className="text-xs text-muted-foreground mt-2">Texto extraído da imagem:</p>
-                <pre className="mt-2 text-xs text-left bg-card rounded-xl p-4 max-h-48 overflow-y-auto whitespace-pre-wrap border border-border">
-                  {extractedText}
-                </pre>
-              </div>
-            )}
-
-            <div className="space-y-2 max-h-[50vh] overflow-y-auto">
-              {parsed.map((a, i) => {
-                const slotInfo = getSlotInfo(a.time_slot);
-                return (
-                  <div key={i} className="rounded-xl border border-border bg-card p-3 flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className={`rounded-full px-2 py-0.5 text-xs font-semibold border ${slotInfo?.color ?? ""}`}>
-                          Dia {a.day} — {slotInfo?.short ?? a.time_slot}
-                        </span>
-                      </div>
-                      <p className="font-semibold text-primary-dark">{a.title}</p>
-                      <div className="text-xs text-muted-foreground mt-0.5 flex flex-wrap gap-x-3">
-                        {a.dirigente && <span>Dir: {a.dirigente}</span>}
-                        {a.leitura && <span>Leit: {a.leitura}</span>}
-                        {a.texto && <span>Texto: {a.texto}</span>}
-                        {a.pregacao && <span>Preg: {a.pregacao}</span>}
-                        {a.estudo && <span>Estudo: {a.estudo}</span>}
-                        {a.local && <span>Local: {a.local}</span>}
-                      </div>
-                    </div>
-                    <button onClick={() => removeParsed(i)} className="text-destructive hover:text-destructive/80 shrink-0 mt-1">
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-
-            <details className="mt-4">
-              <summary className="text-xs text-muted-foreground cursor-pointer hover:text-foreground">
-                Ver texto bruto extraído (OCR)
-              </summary>
-              <pre className="mt-2 text-xs bg-secondary rounded-xl p-4 max-h-40 overflow-y-auto whitespace-pre-wrap">
-                {extractedText}
-              </pre>
-            </details>
-
-            <div className="flex gap-2 mt-4">
-              <Button onClick={handleSave} className="flex-1 bg-primary text-primary-foreground hover:bg-primary-dark">
-                Salvar tudo ({parsed.length} atividades)
-              </Button>
-              <Button variant="outline" onClick={() => setStep("upload")}>
-                Tentar outra imagem
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {step === "saving" && (
-          <div className="text-center py-12">
-            <Loader2 className="mx-auto h-12 w-12 text-primary animate-spin mb-4" />
-            <p className="font-display text-xl text-primary-dark">Salvando atividades...</p>
-          </div>
-        )}
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-/* ---- OCR Text Parser ---- */
-function parseCalendarText(rawText: string, month: string): Omit<Activity, "id">[] {
-  const activities: Omit<Activity, "id">[] = [];
-  const lines = rawText.split("\n").map((l) => l.trim()).filter(Boolean);
-
-  // Try to detect blocks of activity data
-  let currentDay: number | null = null;
-  let currentSlot: string | null = null;
-  let currentTitle = "";
-  let currentFields: Record<string, string> = {};
-
-  const flushActivity = () => {
-    if (currentDay && currentSlot && currentTitle) {
-      activities.push({
-        month,
-        day: currentDay,
-        time_slot: currentSlot,
-        title: currentTitle,
-        dirigente: currentFields.dirigente || null,
-        leitura: currentFields.leitura || null,
-        texto: currentFields.texto || null,
-        pregacao: currentFields.pregacao || null,
-        estudo: currentFields.estudo || null,
-        local: currentFields.local || null,
-        notes: null,
-      });
-    }
-    currentTitle = "";
-    currentFields = {};
-  };
-
-  for (const line of lines) {
-    // Try to detect day numbers (standalone numbers 1-31)
-    const dayMatch = line.match(/^\s*(\d{1,2})\s*$/);
-    if (dayMatch) {
-      const d = parseInt(dayMatch[1]);
-      if (d >= 1 && d <= 31) {
-        flushActivity();
-        currentDay = d;
-        continue;
-      }
-    }
-
-    // Detect known field patterns
-    const fieldPatterns: [string, RegExp][] = [
-      ["dirigente", /^Dirigente\s*[:\-]\s*(.+)/i],
-      ["leitura", /^Leitura\s*[:\-]\s*(.+)/i],
-      ["texto", /^Texto\s*[:\-]\s*(.+)/i],
-      ["pregacao", /^Prega[çc][ãa]o\s*[:\-]\s*(.+)/i],
-      ["estudo", /^Estudo\s*[:\-]\s*(.+)/i],
-    ];
-
-    let matched = false;
-    for (const [key, regex] of fieldPatterns) {
-      const m = line.match(regex);
-      if (m) {
-        currentFields[key] = m[1].trim();
-        matched = true;
-        break;
-      }
-    }
-    if (matched) continue;
-
-    // Detect time slot keywords
-    if (/Escola B[íi]blica/i.test(line) || /Manh[ãa]/i.test(line)) {
-      flushActivity();
-      currentSlot = "domingo_manha";
-      if (/Escola B[íi]blica/i.test(line)) currentTitle = "Escola Bíblica Dominical";
-      continue;
-    }
-    if (/Culto de Adora[çc][ãa]o/i.test(line) || (/Noite/i.test(line) && /18/i.test(line))) {
-      flushActivity();
-      currentSlot = "domingo_noite";
-      if (/Culto de Adora/i.test(line)) currentTitle = "Culto de Adoração";
-      continue;
-    }
-    if (/Culto de Ora[çc][ãa]o/i.test(line)) {
-      flushActivity();
-      currentSlot = "quarta";
-      currentTitle = line.includes("Nos Lares") ? "Culto de Oração Nos Lares" : "Culto de Oração";
-      continue;
-    }
-    if (/Quarta\s*Mission[áa]ria/i.test(line)) {
-      flushActivity();
-      currentSlot = "quarta";
-      currentTitle = "Quarta Missionária";
-      continue;
-    }
-    if (/Reuni[ãa]o de Senhores/i.test(line) || /Reuni[ãa]o de Senhoras/i.test(line)) {
-      flushActivity();
-      currentSlot = "sexta";
-      currentTitle = line;
-      continue;
-    }
-    if (/Encontr[ãa]o/i.test(line)) {
-      flushActivity();
-      currentSlot = "sexta";
-      currentTitle = line;
-      continue;
-    }
-    if (/Mocidade/i.test(line)) {
-      flushActivity();
-      currentSlot = "sabado";
-      currentTitle = "Mocidade";
-      continue;
-    }
-    if (/Segunda/i.test(line)) {
-      flushActivity();
-      currentSlot = "segunda";
-      currentTitle = line;
-      continue;
-    }
-    if (/Ter[cç]a/i.test(line)) {
-      flushActivity();
-      currentSlot = "terca";
-      currentTitle = line;
-      continue;
-    }
-    if (/Quinta/i.test(line)) {
-      flushActivity();
-      currentSlot = "quinta";
-      currentTitle = line;
-      continue;
-    }
-
-    // If we have a current activity but no title yet, this line might be the title
-    if (currentDay && currentSlot && !currentTitle && line.length > 3) {
-      currentTitle = line;
-    }
-  }
-
-  // Flush the last activity
-  flushActivity();
-
-  return activities;
 }

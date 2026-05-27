@@ -19,7 +19,7 @@ export function SiteGate({ children }: { children: ReactNode }) {
   const [shake, setShake] = useState(false);
 
   useEffect(() => {
-    const stored = sessionStorage.getItem(STORAGE_KEY);
+    const stored = localStorage.getItem(STORAGE_KEY);
     if (stored === "1") setUnlocked(true);
     setChecked(true);
   }, []);
@@ -27,7 +27,7 @@ export function SiteGate({ children }: { children: ReactNode }) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (input === CORRECT_PASSWORD) {
-      sessionStorage.setItem(STORAGE_KEY, "1");
+      localStorage.setItem(STORAGE_KEY, "1");
       setUnlocked(true);
       setError(false);
     } else {
