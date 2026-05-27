@@ -1,5 +1,5 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { Heart, Home, Users, UsersRound, Megaphone, Shield, LogIn, LogOut, Menu, X } from "lucide-react";
+import { Heart, Home, Users, UsersRound, Megaphone, Shield, LogIn, LogOut, Menu, X, Calendar } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import logo from "@/assets/logo-ibjj-novo.png";
 import { useAuth } from "@/lib/auth";
@@ -11,6 +11,7 @@ type NavItem = { to: string; label: string; icon: typeof Home; adminOnly?: boole
 const NAV: NavItem[] = [
   { to: "/", label: "Início", icon: Home },
   { to: "/mural", label: "Mural", icon: Heart },
+  { to: "/atividades", label: "Atividades", icon: Calendar },
   { to: "/membros", label: "Membros", icon: Users },
   { to: "/familias", label: "Famílias", icon: UsersRound },
   { to: "/avisos", label: "Avisos", icon: Megaphone },

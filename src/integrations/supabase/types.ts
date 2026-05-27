@@ -92,6 +92,57 @@ export type Database = {
         }
         Relationships: []
       }
+      monthly_activities: {
+        Row: {
+          id: string
+          month: string
+          day: number
+          time_slot: string
+          title: string
+          dirigente: string | null
+          leitura: string | null
+          texto: string | null
+          pregacao: string | null
+          estudo: string | null
+          local: string | null
+          notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          month: string
+          day: number
+          time_slot: string
+          title: string
+          dirigente?: string | null
+          leitura?: string | null
+          texto?: string | null
+          pregacao?: string | null
+          estudo?: string | null
+          local?: string | null
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          month?: string
+          day?: number
+          time_slot?: string
+          title?: string
+          dirigente?: string | null
+          leitura?: string | null
+          texto?: string | null
+          pregacao?: string | null
+          estudo?: string | null
+          local?: string | null
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       members: {
         Row: {
           baptism_date: string | null

@@ -14,6 +14,7 @@ import { Route as MembrosRouteImport } from './routes/membros'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as FamiliasRouteImport } from './routes/familias'
 import { Route as AvisosRouteImport } from './routes/avisos'
+import { Route as AtividadesRouteImport } from './routes/atividades'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as MembrosIdRouteImport } from './routes/membros.$id'
@@ -43,6 +44,11 @@ const AvisosRoute = AvisosRouteImport.update({
   path: '/avisos',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AtividadesRoute = AtividadesRouteImport.update({
+  id: '/atividades',
+  path: '/atividades',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminRoute = AdminRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -62,6 +68,7 @@ const MembrosIdRoute = MembrosIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/atividades': typeof AtividadesRoute
   '/avisos': typeof AvisosRoute
   '/familias': typeof FamiliasRoute
   '/login': typeof LoginRoute
@@ -72,6 +79,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/atividades': typeof AtividadesRoute
   '/avisos': typeof AvisosRoute
   '/familias': typeof FamiliasRoute
   '/login': typeof LoginRoute
@@ -83,6 +91,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/atividades': typeof AtividadesRoute
   '/avisos': typeof AvisosRoute
   '/familias': typeof FamiliasRoute
   '/login': typeof LoginRoute
@@ -95,6 +104,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/admin'
+    | '/atividades'
     | '/avisos'
     | '/familias'
     | '/login'
@@ -105,6 +115,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/admin'
+    | '/atividades'
     | '/avisos'
     | '/familias'
     | '/login'
@@ -115,6 +126,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/admin'
+    | '/atividades'
     | '/avisos'
     | '/familias'
     | '/login'
@@ -126,6 +138,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
+  AtividadesRoute: typeof AtividadesRoute
   AvisosRoute: typeof AvisosRoute
   FamiliasRoute: typeof FamiliasRoute
   LoginRoute: typeof LoginRoute
@@ -170,6 +183,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AvisosRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/atividades': {
+      id: '/atividades'
+      path: '/atividades'
+      fullPath: '/atividades'
+      preLoaderRoute: typeof AtividadesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin': {
       id: '/admin'
       path: '/admin'
@@ -208,6 +228,7 @@ const MembrosRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
+  AtividadesRoute: AtividadesRoute,
   AvisosRoute: AvisosRoute,
   FamiliasRoute: FamiliasRoute,
   LoginRoute: LoginRoute,
