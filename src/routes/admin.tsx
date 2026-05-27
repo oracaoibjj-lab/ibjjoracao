@@ -471,9 +471,9 @@ function FamiliesAdmin() {
     e.preventDefault();
     const { error } = await supabase.from("families").insert({ name, description: desc || null });
     if (error) toast.error(error.message);
-    else { setName(""); setDesc(""); toast.success("Família criada"); qc.invalidateQueries({ queryKey: ["admin-families"] }); }
+    else { setName(""); setDesc(""); toast.success("Família criada"); qc.invalidateQueries({ queryKey: ["admin-families"] }); qc.invalidateQueries({ queryKey: ["fams-opts"] }); }
   };
-  const remove = async (id: string) => { if (!confirm("Excluir família?")) return; await supabase.from("families").delete().eq("id", id); qc.invalidateQueries({ queryKey: ["admin-families"] }); };
+  const remove = async (id: string) => { if (!confirm("Excluir família?")) return; await supabase.from("families").delete().eq("id", id); qc.invalidateQueries({ queryKey: ["admin-families"] }); qc.invalidateQueries({ queryKey: ["fams-opts"] }); };
   return (
     <div className="grid lg:grid-cols-2 gap-6">
       <form onSubmit={add} className="rounded-2xl border border-border bg-card p-5 space-y-3 h-fit">
@@ -489,11 +489,64 @@ function FamiliesAdmin() {
               <p className="font-medium">Família {f.name}</p>
               <p className="text-sm text-muted-foreground">{f.members.length} membros</p>
             </div>
-            <Button size="icon" variant="ghost" onClick={() => remove(f.id)} className="text-destructive"><Trash2 className="h-4 w-4" /></Button>
+            <div className="flex gap-1">
+              <FamilyEditDialog family={f} />
+              <Button size="icon" variant="ghost" onClick={() => remove(f.id)} className="text-destructive"><Trash2 className="h-4 w-4" /></Button>
+            </div>
           </div>
         ))}
       </div>
     </div>
+  );
+}
+
+function FamilyEditDialog({ family }: { family: any }) {
+  const qc = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState(family.name);
+  const [desc, setDesc] = useState(family.description ?? "");
+  const [loading, setLoading] = useState(false);
+
+  const save = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    const { error } = await supabase
+      .from("families")
+      .update({ name, description: desc || null })
+      .eq("id", family.id);
+    setLoading(false);
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success("Família atualizada");
+      setOpen(false);
+      qc.invalidateQueries({ queryKey: ["admin-families"] });
+      qc.invalidateQueries({ queryKey: ["fams-opts"] });
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button size="icon" variant="ghost"><Edit2 className="h-4 w-4" /></Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-md">
+        <DialogHeader><DialogTitle>Editar família</DialogTitle></DialogHeader>
+        <form onSubmit={save} className="space-y-3">
+          <div>
+            <Label>Nome da Família</Label>
+            <Input value={name} onChange={(e) => setName(e.target.value)} required />
+          </div>
+          <div>
+            <Label>Descrição (opcional)</Label>
+            <Textarea value={desc} onChange={(e) => setDesc(e.target.value)} />
+          </div>
+          <Button type="submit" disabled={loading} className="w-full bg-primary text-primary-foreground hover:bg-primary-dark">
+            {loading ? "Salvando..." : "Salvar"}
+          </Button>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
 
