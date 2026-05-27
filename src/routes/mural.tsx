@@ -187,7 +187,7 @@ function MuralPage() {
     setExportingPdf(true);
     try {
       const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
-        import("html2canvas"),
+        import("html2canvas-pro"),
         import("jspdf"),
       ]);
       const canvas = await html2canvas(pdfContainerRef.current, {
