@@ -31,7 +31,7 @@ export const Route = createFileRoute("/mural")({
 });
 
 function MuralPage() {
-  const { user, isApproved } = useAuth();
+  const { user, isApproved, isAdmin } = useAuth();
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [filterCat, setFilterCat] = useState<string>("all");
@@ -112,7 +112,7 @@ function MuralPage() {
           <h1 className="font-display text-4xl sm:text-5xl text-primary-dark">Mural de Oração</h1>
           <p className="mt-2 text-muted-foreground text-lg">Compartilhe pedidos, agradeça e ore pelos irmãos.</p>
         </div>
-        {user && isApproved && <NewPrayerDialog />}
+        {user && (isApproved || isAdmin) && <NewPrayerDialog />}
       </div>
 
       <div className="flex flex-wrap gap-3 mb-6">

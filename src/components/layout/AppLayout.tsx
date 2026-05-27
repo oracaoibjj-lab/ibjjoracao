@@ -24,7 +24,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [open, setOpen] = useState(false);
 
-  const items = NAV.filter((n) => (!n.adminOnly || isAdmin) && (!n.memberOnly || isApproved));
+  const items = NAV.filter((n) => (!n.adminOnly || isAdmin) && (!n.memberOnly || isApproved || isAdmin));
   const isLogin = pathname === "/login";
 
   if (isLogin) return <>{children}</>;
@@ -104,7 +104,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
         )}
       </header>
 
-      {user && !isApproved && !loading && (
+      {user && !isApproved && !isAdmin && !loading && (
         <div className="bg-amber-500/10 border-b border-amber-500/20 text-amber-800 px-4 py-3 text-center text-sm font-medium">
           Sua conta foi criada e está aguardando aprovação do administrador para acesso completo.
         </div>
