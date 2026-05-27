@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import {
   ChevronLeft, ChevronRight, Plus, Edit2, Trash2, Upload,
-  Calendar, User, BookOpen, Mic, FileText, Loader2
+  Calendar, User, BookOpen, Mic, FileText, Loader2, MapPin, Info
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -112,6 +112,7 @@ function ActivitiesPage() {
   const qc = useQueryClient();
   const [currentMonth, setCurrentMonth] = useState(getCurrentMonth);
   const [editActivity, setEditActivity] = useState<Activity | null>(null);
+  const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
   const [showAdd, setShowAdd] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [addDefaults, setAddDefaults] = useState<{ day?: number; time_slot?: string }>({});
@@ -253,14 +254,21 @@ function ActivitiesPage() {
                         activity ? (
                           <button
                             key={slot.key}
-                            onClick={() => isAdmin && setEditActivity(activity)}
-                            className={`w-full text-left rounded-lg border px-2 py-1.5 mb-1 text-xs transition
-                              ${slot.color}
-                              ${isAdmin ? "cursor-pointer hover:shadow-sm" : "cursor-default"}`}
+                            onClick={() => setSelectedActivity(activity)}
+                            className={`w-full text-left rounded-lg border px-2 py-1.5 mb-1 text-xs transition cursor-pointer hover:shadow-sm ${slot.color}`}
                           >
                             <p className="font-semibold truncate">{activity.title}</p>
                             {activity.dirigente && (
-                              <p className="opacity-75 truncate">Dir: {activity.dirigente}</p>
+                              <p className="text-[10px] opacity-75 truncate">Dir: {activity.dirigente}</p>
+                            )}
+                            {activity.pregacao && (
+                              <p className="text-[10px] opacity-75 truncate">Preg: {activity.pregacao}</p>
+                            )}
+                            {activity.estudo && (
+                              <p className="text-[10px] opacity-75 truncate font-medium">Est: {activity.estudo}</p>
+                            )}
+                            {activity.texto && (
+                              <p className="text-[10px] opacity-75 truncate italic">Txt: {activity.texto}</p>
                             )}
                           </button>
                         ) : null
@@ -303,8 +311,8 @@ function ActivitiesPage() {
                 {weekActivities.map(({ day, slot, activity }) => (
                   <div
                     key={activity.id}
-                    className={`p-4 ${isAdmin ? "cursor-pointer hover:bg-secondary/30" : ""} transition`}
-                    onClick={() => isAdmin && setEditActivity(activity)}
+                    className="p-4 cursor-pointer hover:bg-secondary/30 transition"
+                    onClick={() => setSelectedActivity(activity)}
                   >
                     <div className="flex items-center gap-2 mb-2">
                       <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold border ${slot.color}`}>
@@ -389,7 +397,98 @@ function ActivitiesPage() {
           }}
         />
       )}
+
+      {/* View Details Dialog */}
+      {selectedActivity && (
+        <ViewActivityDialog
+          activity={selectedActivity}
+          onClose={() => setSelectedActivity(null)}
+          onEdit={() => {
+            setEditActivity(selectedActivity);
+            setSelectedActivity(null);
+          }}
+        />
+      )}
     </div>
+  );
+}
+
+/* ---- View Activity Details Dialog ---- */
+function ViewActivityDialog({
+  activity,
+  onClose,
+  onEdit,
+}: {
+  activity: Activity;
+  onClose: () => void;
+  onEdit: () => void;
+}) {
+  const { isAdmin } = useAuth();
+  const slotInfo = getSlotInfo(activity.time_slot);
+
+  const detailItems = [
+    { label: "Dirigente", value: activity.dirigente, icon: User, color: "text-blue-500 bg-blue-50/50 border-blue-100" },
+    { label: "Pregação / Mensagem", value: activity.pregacao, icon: Mic, color: "text-amber-500 bg-amber-50/50 border-amber-100" },
+    { label: "Leitura Bíblica", value: activity.leitura, icon: BookOpen, color: "text-emerald-500 bg-emerald-50/50 border-emerald-100" },
+    { label: "Texto Chave", value: activity.texto, icon: FileText, color: "text-violet-500 bg-violet-50/50 border-violet-100" },
+    { label: "Estudo", value: activity.estudo, icon: BookOpen, color: "text-rose-500 bg-rose-50/50 border-rose-100" },
+    { label: "Local", value: activity.local, icon: MapPin, color: "text-sky-500 bg-sky-50/50 border-sky-100" },
+  ].filter(item => !!item.value);
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto rounded-3xl p-6">
+        <DialogHeader className="pb-3 border-b border-border">
+          <div className="flex items-center gap-2 mb-2">
+            <span className={`rounded-full px-3 py-1 text-xs font-semibold border ${slotInfo?.color ?? ""}`}>
+              Dia {activity.day} — {slotInfo?.label ?? activity.time_slot}
+            </span>
+          </div>
+          <DialogTitle className="font-display text-2xl text-primary-dark leading-tight">{activity.title}</DialogTitle>
+        </DialogHeader>
+
+        <div className="mt-4 space-y-4">
+          {detailItems.length > 0 ? (
+            <div className="grid gap-3">
+              {detailItems.map((item, idx) => (
+                <div key={idx} className="flex items-start gap-3 p-3 rounded-xl border border-border bg-card">
+                  <div className={`p-2 rounded-lg shrink-0 border ${item.color}`}>
+                    <item.icon className="h-5 w-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">{item.label}</p>
+                    <p className="text-base text-foreground font-medium mt-0.5 break-words">{item.value}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground text-center py-8">Nenhum detalhe adicional cadastrado.</p>
+          )}
+
+          {activity.notes && (
+            <div className="p-3.5 rounded-xl border border-dashed border-border bg-secondary/20">
+              <div className="flex gap-2 text-muted-foreground mb-1">
+                <Info className="h-4 w-4 shrink-0 mt-0.5" />
+                <span className="text-xs font-semibold uppercase tracking-wider">Observações</span>
+              </div>
+              <p className="text-sm text-foreground italic break-words">{activity.notes}</p>
+            </div>
+          )}
+        </div>
+
+        <div className="flex gap-3 mt-6 pt-3 border-t border-border">
+          <Button variant="outline" onClick={onClose} className="flex-1 rounded-full py-5 text-sm font-medium">
+            Fechar
+          </Button>
+          {isAdmin && (
+            <Button onClick={onEdit} className="flex-1 rounded-full py-5 bg-primary text-primary-foreground hover:bg-primary-dark text-sm font-medium">
+              <Edit2 className="h-4 w-4 mr-2" /> Editar
+            </Button>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
