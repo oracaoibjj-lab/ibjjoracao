@@ -190,7 +190,7 @@ function MuralPage() {
           >
             <Printer className="h-5 w-5 mr-2" /> Exportar PDF
           </Button>
-          {user && (isApproved || isAdmin) && <NewPrayerDialog />}
+          {(!user || isApproved || isAdmin) && <NewPrayerDialog />}
         </div>
       </div>
 
