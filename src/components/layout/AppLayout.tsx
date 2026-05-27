@@ -31,7 +31,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <header className="sticky top-0 z-40 border-b border-border bg-background/85 backdrop-blur">
+      <header className="sticky top-0 z-40 border-b border-border bg-background/85 backdrop-blur print:hidden">
         <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6">
           <Link to="/" className="flex items-center gap-3">
             <img src={logo} alt="IBJJ" className="h-14 w-auto object-contain" />
@@ -101,14 +101,14 @@ export function AppLayout({ children }: { children: ReactNode }) {
       </header>
 
       {user && !isApproved && !isAdmin && !loading && (
-        <div className="bg-amber-500/10 border-b border-amber-500/20 text-amber-800 px-4 py-3 text-center text-sm font-medium">
+        <div className="bg-amber-500/10 border-b border-amber-500/20 text-amber-800 px-4 py-3 text-center text-sm font-medium print:hidden">
           Sua conta foi criada e está aguardando aprovação do administrador para acesso completo.
         </div>
       )}
 
       <main className="flex-1">{children}</main>
 
-      <footer className="border-t border-border mt-12 bg-secondary/10">
+      <footer className="border-t border-border mt-12 bg-secondary/10 print:hidden">
         <div className="mx-auto max-w-7xl px-6 py-8 text-center text-sm text-muted-foreground flex flex-col items-center gap-2">
           <p className="italic text-base">"a igreja do Deus vivo, coluna e baluarte da verdade"</p>
           <p className="mt-1 text-xs">1 Timóteo 3.15</p>

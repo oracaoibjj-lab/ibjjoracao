@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Heart, Plus, HandHeart } from "lucide-react";
+import { Heart, Plus, HandHeart, Printer } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
@@ -142,12 +142,21 @@ function MuralPage() {
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-8">
         <div>
           <h1 className="font-display text-4xl sm:text-5xl text-primary-dark">Mural de Oração</h1>
-          <p className="mt-2 text-muted-foreground text-lg">Compartilhe pedidos, agradeça e ore pelos irmãos.</p>
+          <p className="mt-2 text-muted-foreground text-lg print:hidden">Compartilhe pedidos, agradeça e ore pelos irmãos.</p>
         </div>
-        {user && (isApproved || isAdmin) && <NewPrayerDialog />}
+        <div className="flex gap-2 print:hidden">
+          <Button
+            onClick={() => window.print()}
+            variant="outline"
+            className="rounded-full h-12 px-6 text-base border border-border bg-card hover:bg-secondary"
+          >
+            <Printer className="h-5 w-5 mr-2" /> Exportar PDF
+          </Button>
+          {user && (isApproved || isAdmin) && <NewPrayerDialog />}
+        </div>
       </div>
 
-      <div className="flex flex-wrap gap-3 mb-6">
+      <div className="flex flex-wrap gap-3 mb-6 print:hidden">
         <Select value={filterType} onValueChange={setFilterType}>
           <SelectTrigger className="w-44 rounded-full bg-card"><SelectValue /></SelectTrigger>
           <SelectContent>
@@ -174,7 +183,7 @@ function MuralPage() {
           const isThanks = p.type === "agradecimento";
           const member = (p as any).members;
           return (
-            <article key={p.id} className="p-5 sm:p-6 hover:bg-secondary/30 transition-colors">
+            <article key={p.id} className="p-5 sm:p-6 hover:bg-secondary/30 transition-colors print:break-inside-avoid">
               <div className="flex gap-4">
                 {/* Avatar */}
                 <div className="shrink-0">
