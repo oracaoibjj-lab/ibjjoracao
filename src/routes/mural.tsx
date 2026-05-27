@@ -89,18 +89,35 @@ function MuralPage() {
   const toggleReact = async (prayerId: string) => {
     const sid = getSessionId();
     const has = myReactions?.has(prayerId);
+
+    // Atualização otimista: muda o estado imediatamente na tela
+    qc.setQueryData(["my-reactions", user?.id], (old: Set<string> | undefined) => {
+      const next = new Set(old ?? []);
+      if (has) next.delete(prayerId);
+      else next.add(prayerId);
+      return next;
+    });
+    qc.setQueryData(["reaction-counts", prayers?.map((p) => p.id).join(",")], (old: Record<string, number> | undefined) => {
+      const next = { ...(old ?? {}) };
+      next[prayerId] = (next[prayerId] ?? 0) + (has ? -1 : 1);
+      if (next[prayerId] <= 0) delete next[prayerId];
+      return next;
+    });
+
     if (has) {
       let q = supabase.from("reactions").delete().eq("prayer_id", prayerId);
       if (user) q = q.eq("user_id", user.id);
       else q = q.eq("session_id", sid);
       await q;
     } else {
-      await supabase.from("reactions").insert({ 
-        prayer_id: prayerId, 
+      await supabase.from("reactions").insert({
+        prayer_id: prayerId,
         user_id: user?.id ?? null,
-        session_id: !user ? sid : null
+        session_id: !user ? sid : null,
       });
     }
+
+    // Confirma com o servidor após a ação
     qc.invalidateQueries({ queryKey: ["my-reactions"] });
     qc.invalidateQueries({ queryKey: ["reaction-counts"] });
   };
