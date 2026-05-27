@@ -127,7 +127,11 @@ function MembersList({ members }: { members: any[] }) {
                   )}
                   {m.baptism_date && (
                     <span className="inline-flex items-center gap-1">
-                      <Heart className="h-3.5 w-3.5" /> Batizado em {format(new Date(m.baptism_date), "MMM/yyyy", { locale: ptBR })}
+                      <Heart className="h-3.5 w-3.5" /> Batizado em {
+                        m.baptism_date.endsWith("-01-01")
+                          ? m.baptism_date.substring(0, 4)
+                          : format(new Date(m.baptism_date + "T00:00:00"), "MMM/yyyy", { locale: ptBR })
+                      }
                     </span>
                   )}
                   {!m.baptism_date && m.conversion_year && (

@@ -99,8 +99,17 @@ function MemberPage() {
         <dl className="mt-8 grid sm:grid-cols-2 gap-x-6 gap-y-4">
           {member.marital_status && <Info label="Estado civil" value={member.marital_status} />}
           {member.spouse && <Info label="Cônjuge" value={member.spouse} />}
-          {member.baptism_date && <Info label="Batismo" value={format(new Date(member.baptism_date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })} />}
-          {isAdmin && member.phone && <Info label="Telefone (admin)" value={member.phone} />}
+          {member.baptism_date && (
+            <Info
+              label="Batismo"
+              value={
+                member.baptism_date.endsWith("-01-01")
+                  ? member.baptism_date.substring(0, 4)
+                  : format(new Date(member.baptism_date + "T00:00:00"), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })
+              }
+            />
+          )}
+          {isAdmin && member.phone && <Info label="Telefone" value={member.phone} />}
           {isAdmin && member.email && <Info label="E-mail (admin)" value={member.email} />}
         </dl>
 

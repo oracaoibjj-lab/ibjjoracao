@@ -47,7 +47,7 @@ function AdminPage() {
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 py-10">
       <h1 className="font-display text-4xl sm:text-5xl text-primary-dark">Administração</h1>
-      <p className="mt-2 text-muted-foreground text-lg">Gerencie membros, pedidos, avisos e programações.</p>
+      <p className="mt-2 text-muted-foreground text-lg">Gerencie membros, pedidos, avisos e versículos.</p>
 
       <DashboardStats />
 
@@ -58,7 +58,6 @@ function AdminPage() {
           <TabsTrigger value="members" className="rounded-full px-5 py-2.5"><Users className="h-4 w-4 mr-2" />Membros</TabsTrigger>
           <TabsTrigger value="families" className="rounded-full px-5 py-2.5">Famílias</TabsTrigger>
           <TabsTrigger value="announcements" className="rounded-full px-5 py-2.5"><Megaphone className="h-4 w-4 mr-2" />Avisos</TabsTrigger>
-          <TabsTrigger value="schedule" className="rounded-full px-5 py-2.5"><Calendar className="h-4 w-4 mr-2" />Programações</TabsTrigger>
           <TabsTrigger value="verses" className="rounded-full px-5 py-2.5"><BookOpen className="h-4 w-4 mr-2" />Versículos</TabsTrigger>
         </TabsList>
         <TabsContent value="prayers" className="mt-6"><PrayersAdmin /></TabsContent>
@@ -66,7 +65,6 @@ function AdminPage() {
         <TabsContent value="members" className="mt-6"><MembersAdmin /></TabsContent>
         <TabsContent value="families" className="mt-6"><FamiliesAdmin /></TabsContent>
         <TabsContent value="announcements" className="mt-6"><AnnouncementsAdmin /></TabsContent>
-        <TabsContent value="schedule" className="mt-6"><ScheduleAdmin /></TabsContent>
         <TabsContent value="verses" className="mt-6"><VersesAdmin /></TabsContent>
       </Tabs>
     </div>
@@ -286,9 +284,15 @@ function MemberForm({ member }: { member?: any }) {
         setOpen(o); 
         if (o) {
             if (member) {
-                setForm({ ...member, is_child: !!member.is_child, ministry: member.ministry || "" });
+                const isYearOnly = member.baptism_date ? member.baptism_date.endsWith("-01-01") : false;
+                setForm({ 
+                    ...member, 
+                    is_child: !!member.is_child, 
+                    ministry: member.ministry || "",
+                    baptism_year_only: isYearOnly
+                });
             } else {
-                setForm({ full_name: "", marital_status: "solteiro", is_child: false, ministry: "" });
+                setForm({ full_name: "", marital_status: "solteiro", is_child: false, ministry: "", baptism_year_only: false });
             }
         }
     }}>
@@ -306,7 +310,7 @@ function MemberForm({ member }: { member?: any }) {
             <Select value={form.marital_status ?? ""} onValueChange={(v) => setForm({ ...form, marital_status: v })}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                {["solteiro", "casado", "viuvo", "divorciado", "outro"].map((s) => <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>)}
+                {["solteiro", "casado", "viuvo", "outro"].map((s) => <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
@@ -348,7 +352,7 @@ function MemberForm({ member }: { member?: any }) {
               onChange={(v) => setForm({ ...form, children: v })}
             />
           </div>
-          <div><Label>Telefone (admin)</Label><Input value={form.phone ?? ""} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></div>
+          <div><Label>Telefone</Label><Input value={form.phone ?? ""} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></div>
           <div><Label>E-mail (admin)</Label><Input value={form.email ?? ""} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
           <div>
             <div className="flex items-center justify-between mb-1">
