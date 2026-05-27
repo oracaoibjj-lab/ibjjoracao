@@ -90,7 +90,7 @@ function MuralPage() {
     const sid = getSessionId();
     const has = myReactions?.has(prayerId);
 
-    // Atualização otimista: muda o estado imediatamente na tela
+    // Atualização otimista
     qc.setQueryData(["my-reactions", user?.id], (old: Set<string> | undefined) => {
       const next = new Set(old ?? []);
       if (has) next.delete(prayerId);
@@ -104,22 +104,37 @@ function MuralPage() {
       return next;
     });
 
-    if (has) {
-      let q = supabase.from("reactions").delete().eq("prayer_id", prayerId);
-      if (user) q = q.eq("user_id", user.id);
-      else q = q.eq("session_id", sid);
-      await q;
-    } else {
-      await supabase.from("reactions").insert({
-        prayer_id: prayerId,
-        user_id: user?.id ?? null,
-        session_id: !user ? sid : null,
+    try {
+      if (has) {
+        let q = supabase.from("reactions").delete().eq("prayer_id", prayerId);
+        if (user) q = q.eq("user_id", user.id);
+        else q = q.eq("session_id", sid);
+        const { data, error } = await q.select();
+        if (error) throw error;
+        if (!data || data.length === 0) {
+          throw new Error("Não foi possível remover a reação (sem permissão)");
+        }
+      } else {
+        const { error } = await supabase.from("reactions").insert({
+          prayer_id: prayerId,
+          user_id: user?.id ?? null,
+          session_id: !user ? sid : null,
+        });
+        if (error) throw error;
+      }
+      // Confirma com o servidor
+      qc.invalidateQueries({ queryKey: ["my-reactions"] });
+      qc.invalidateQueries({ queryKey: ["reaction-counts"] });
+    } catch (err: any) {
+      // Reverte o estado otimista em caso de erro
+      qc.setQueryData(["my-reactions", user?.id], (old: Set<string> | undefined) => {
+        const next = new Set(old ?? []);
+        if (has) next.add(prayerId);
+        else next.delete(prayerId);
+        return next;
       });
+      toast.error(`Erro ao reagir: ${err?.message ?? "tente novamente"}`);
     }
-
-    // Confirma com o servidor após a ação
-    qc.invalidateQueries({ queryKey: ["my-reactions"] });
-    qc.invalidateQueries({ queryKey: ["reaction-counts"] });
   };
 
   return (
