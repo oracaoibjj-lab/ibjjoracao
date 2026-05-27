@@ -56,15 +56,11 @@ export function AppLayout({ children }: { children: ReactNode }) {
           </nav>
 
           <div className="flex items-center gap-2">
-            {!loading && (user ? (
+            {!loading && user && (
               <Button variant="ghost" size="sm" onClick={async () => { await signOut(); navigate({ to: "/" }); }} className="hidden sm:inline-flex">
                 <LogOut className="h-4 w-4 mr-2" /> Sair
               </Button>
-            ) : (
-              <Button onClick={() => navigate({ to: "/login" })} className="rounded-full bg-primary text-primary-foreground hover:bg-primary-dark">
-                <LogIn className="h-4 w-4 mr-2" /> Entrar
-              </Button>
-            ))}
+            )}
             <button
               className="lg:hidden inline-flex h-11 w-11 items-center justify-center rounded-full hover:bg-secondary"
               onClick={() => setOpen((o) => !o)}
@@ -112,10 +108,15 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
       <main className="flex-1">{children}</main>
 
-      <footer className="border-t border-border mt-12">
-        <div className="mx-auto max-w-7xl px-6 py-8 text-center text-sm text-muted-foreground">
+      <footer className="border-t border-border mt-12 bg-secondary/10">
+        <div className="mx-auto max-w-7xl px-6 py-8 text-center text-sm text-muted-foreground flex flex-col items-center gap-2">
           <p className="italic text-base">"a igreja do Deus vivo, coluna e baluarte da verdade"</p>
           <p className="mt-1 text-xs">1 Timóteo 3.15</p>
+          {!loading && !user && (
+            <Link to="/login" className="mt-4 text-xs text-muted-foreground/30 hover:text-primary transition-colors">
+              Área Restrita
+            </Link>
+          )}
         </div>
       </footer>
     </div>
