@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -36,6 +36,7 @@ function MuralPage() {
   const qc = useQueryClient();
   const [filterCat, setFilterCat] = useState<string>("all");
   const [filterType, setFilterType] = useState<string>("all");
+  const [filterMonth, setFilterMonth] = useState<string>("all");
 
   const { data: prayers, isLoading } = useQuery({
     queryKey: ["prayers", filterCat, filterType],
@@ -52,6 +53,43 @@ function MuralPage() {
       return data;
     },
   });
+
+  const monthsOptions = useMemo(() => {
+    if (!prayers) return [];
+    const months = new Set<string>();
+    prayers.forEach((p) => {
+      const date = new Date(p.created_at);
+      const key = format(date, "yyyy-MM");
+      months.add(key);
+    });
+    return Array.from(months)
+      .sort((a, b) => b.localeCompare(a))
+      .map((m) => {
+        const [year, month] = m.split("-").map(Number);
+        const date = new Date(year, month - 1, 1);
+        return {
+          value: m,
+          label: format(date, "MMMM 'de' yyyy", { locale: ptBR }),
+        };
+      });
+  }, [prayers]);
+
+  const filteredPrayers = useMemo(() => {
+    if (!prayers) return [];
+    return prayers.filter((p) => {
+      const matchesCat = filterCat === "all" || p.category === filterCat;
+      const matchesType = filterType === "all" || p.type === filterType;
+      
+      let matchesMonth = true;
+      if (filterMonth !== "all") {
+        const date = new Date(p.created_at);
+        const key = format(date, "yyyy-MM");
+        matchesMonth = key === filterMonth;
+      }
+      
+      return matchesCat && matchesType && matchesMonth;
+    });
+  }, [prayers, filterCat, filterType, filterMonth]);
 
   const getSessionId = () => {
     let sid = localStorage.getItem("ibjj_session_id");
@@ -172,12 +210,23 @@ function MuralPage() {
             {CATEGORIES.map((c) => <SelectItem key={c.v} value={c.v}>{c.l}</SelectItem>)}
           </SelectContent>
         </Select>
+        <Select value={filterMonth} onValueChange={setFilterMonth}>
+          <SelectTrigger className="w-48 rounded-full bg-card"><SelectValue placeholder="Todos os meses" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos os meses</SelectItem>
+            {monthsOptions.map((m) => (
+              <SelectItem key={m.value} value={m.value}>
+                {m.label.charAt(0).toUpperCase() + m.label.slice(1)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {isLoading && <p className="text-muted-foreground">Carregando...</p>}
 
       <div className="rounded-3xl border border-border bg-card overflow-hidden divide-y divide-border">
-        {prayers?.map((p) => {
+        {filteredPrayers.map((p) => {
           const reacted = myReactions?.has(p.id);
           const count = counts?.[p.id] ?? 0;
           const isThanks = p.type === "agradecimento";
@@ -237,10 +286,12 @@ function MuralPage() {
         })}
       </div>
 
-      {prayers && prayers.length === 0 && (
+      {prayers && filteredPrayers.length === 0 && (
         <div className="text-center py-20 rounded-3xl border border-dashed border-border mt-4">
           <Heart className="mx-auto h-12 w-12 text-muted-foreground/40" />
-          <p className="mt-4 text-lg text-muted-foreground">Nenhum pedido aprovado ainda.</p>
+          <p className="mt-4 text-lg text-muted-foreground">
+            {prayers.length === 0 ? "Nenhum pedido aprovado ainda." : "Nenhum pedido encontrado para o filtro selecionado."}
+          </p>
         </div>
       )}
     </div>
