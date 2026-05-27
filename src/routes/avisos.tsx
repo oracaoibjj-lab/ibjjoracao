@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Calendar, Megaphone, Star } from "lucide-react";
-import { format } from "date-fns";
+import { Calendar, Megaphone, Star, Cake, User } from "lucide-react";
+import { format, startOfWeek, endOfWeek, isSameDay, addDays, differenceInYears } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 export const Route = createFileRoute("/avisos")({
@@ -29,8 +29,84 @@ function AnnouncementsPage() {
     },
   });
 
+  const { data: birthdays } = useQuery({
+    queryKey: ["birthdays-week"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("members")
+        .select("id, full_name, photo_url, birth_date")
+        .not("birth_date", "is", null);
+      if (!data) return [];
+
+      const today = new Date();
+      const weekStart = startOfWeek(today, { weekStartsOn: 0 });
+      const weekEnd = endOfWeek(today, { weekStartsOn: 0 });
+
+      return data
+        .filter((m) => {
+          if (!m.birth_date) return false;
+          const bd = new Date(m.birth_date);
+          // Create date in current year with same month/day
+          const thisYearBd = new Date(today.getFullYear(), bd.getMonth(), bd.getDate());
+          return thisYearBd >= weekStart && thisYearBd <= weekEnd;
+        })
+        .map((m) => {
+          const bd = new Date(m.birth_date!);
+          const thisYearBd = new Date(today.getFullYear(), bd.getMonth(), bd.getDate());
+          const age = differenceInYears(today, bd);
+          const isToday = isSameDay(thisYearBd, today);
+          return { ...m, age, thisYearBd, isToday };
+        })
+        .sort((a, b) => a.thisYearBd.getTime() - b.thisYearBd.getTime());
+    },
+  });
+
   return (
     <div className="mx-auto max-w-5xl px-4 sm:px-6 py-10 space-y-12">
+
+      {/* ANIVERSARIANTES DA SEMANA */}
+      {birthdays && birthdays.length > 0 && (
+        <section>
+          <h2 className="font-display text-3xl text-primary-dark flex items-center gap-3">
+            <Cake className="h-7 w-7 text-gold" /> Aniversariantes da semana
+          </h2>
+          <div className="mt-6 grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {birthdays.map((m) => (
+              <div
+                key={m.id}
+                className={`rounded-3xl border p-5 flex items-center gap-4 transition
+                  ${m.isToday
+                    ? "border-gold bg-gold/10 ring-2 ring-gold/30"
+                    : "border-border bg-card"
+                  }`}
+              >
+                {m.photo_url ? (
+                  <img
+                    src={m.photo_url}
+                    alt={m.full_name}
+                    className="h-14 w-14 rounded-full object-cover ring-2 ring-border shrink-0"
+                  />
+                ) : (
+                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary shrink-0">
+                    <User className="h-6 w-6" />
+                  </div>
+                )}
+                <div className="min-w-0">
+                  <p className="font-display text-lg text-primary-dark truncate">
+                    {m.full_name}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {m.isToday ? "🎉 Hoje!" : format(m.thisYearBd, "EEEE, dd/MM", { locale: ptBR })}
+                    {m.age > 0 && ` • ${m.age} anos`}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* AVISOS */}
       <section>
         <h1 className="font-display text-4xl sm:text-5xl text-primary-dark flex items-center gap-3">
           <Megaphone className="h-9 w-9 text-gold" /> Avisos
@@ -50,6 +126,7 @@ function AnnouncementsPage() {
         </div>
       </section>
 
+      {/* PROGRAMAÇÕES */}
       <section>
         <h2 className="font-display text-3xl text-primary-dark flex items-center gap-3">
           <Calendar className="h-7 w-7 text-primary" /> Programações
@@ -79,3 +156,4 @@ function AnnouncementsPage() {
     </div>
   );
 }
+

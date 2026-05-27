@@ -9,6 +9,7 @@ import {
 } from "@tanstack/react-router";
 import appCss from "../styles.css?url";
 import { AuthProvider } from "@/lib/auth";
+import { SiteGate } from "@/lib/site-gate";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -95,9 +96,11 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <AppLayout>
-          <Outlet />
-        </AppLayout>
+        <SiteGate>
+          <AppLayout>
+            <Outlet />
+          </AppLayout>
+        </SiteGate>
         <Toaster richColors position="top-center" />
       </AuthProvider>
     </QueryClientProvider>
